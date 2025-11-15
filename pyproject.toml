@@ -1,0 +1,32 @@
+# This is the standard configuration file for modern Python tools.
+
+[tool.ruff]
+line-length = 88
+unsafe-fixes = true
+
+target-version = "py311"
+
+# --- LINTING RULES ---
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "DJ", "N", "C4", "A"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "polls", "users", "payments", "notifications"]
+
+# --- FORMATTING ---
+[tool.ruff.format]
+quote-style = "double"
+
+
+# --- FILE EXCLUSIONS ---
+exclude = [
+    ".git",
+    ".idea",
+    ".vscode",
+    "__pycache__",
+    "venv",
+    ".venv",
+    ".env",
+    "manage.py",
+    "*/migrations/*",
+]

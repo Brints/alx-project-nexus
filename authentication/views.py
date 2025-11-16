@@ -1,12 +1,15 @@
+from typing import cast
+
 from rest_framework import viewsets, permissions, status
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 
-from authentication.serializers import RegisterSerializer, LoginSerializer  # Import LoginSerializer
+from authentication.serializers import RegisterSerializer, LoginSerializer
 
+UserModel = get_user_model()
 
 class RegisterViewSet(viewsets.GenericViewSet):
     serializer_class = RegisterSerializer
@@ -44,7 +47,12 @@ class LoginViewSet(viewsets.GenericViewSet):
         if user is None:
             raise AuthenticationFailed("Invalid email or password.")
 
-        if not user.is_active:
+        custom_user = cast(UserModel, user)
+
+        if not custom_user.email_verified:
+            raise AuthenticationFailed("Email is not verified.")
+
+        if not custom_user.is_active:
             raise AuthenticationFailed("Your account is not active.")
 
         refresh = RefreshToken.for_user(user)
@@ -55,7 +63,7 @@ class LoginViewSet(viewsets.GenericViewSet):
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             }
-        })
+        }, status=status.HTTP_200_OK)
 
 
 class LogoutViewSet(viewsets.GenericViewSet):
@@ -75,5 +83,4 @@ class LogoutViewSet(viewsets.GenericViewSet):
         except TokenError:
             raise ValidationError({"message": "Invalid or expired token."})
         except Exception as e:
-            # Let the custom exception handler manage unexpected errors
             raise e

@@ -25,6 +25,8 @@ It serves as a backend-focused implementation for the ProDev BE case study, meti
 - **Deployment**: AWS / Heroku
 - **Formatting/Linting**: Ruff
 - **Code Quality**: SonarCloud
+- **Celery**: For handling asynchronous tasks
+- **Redis**: As a message broker for Celery
 
 ## Getting Started
 To get started with The Agora, follow these steps:
@@ -53,6 +55,15 @@ To get started with The Agora, follow these steps:
 5. **Start the Development Server**:
    ```bash
    python manage.py runserver
+   
+   ## Start Redis Server in another terminal:
+   redis-server
+   
+   ## Using Docker to start Redis:
+   docker run -d -p 6379:6379 redis
+   
+   ## Start Celery Worker in another terminal:
+   celery -A core worker --loglevel=info --pool=solo
    ```
 6. **Access the Application**:
    Open your web browser and navigate to `http://localhost:8000`.

@@ -45,8 +45,8 @@ INSTALLED_APPS = [
     "cloudinary",
     # modular apps
     "core",
-    'users',
-    'authentication',
+    "users",
+    "authentication",
     # 'polls',
     # 'payments',
     # 'notifications',
@@ -76,7 +76,7 @@ ASGI_APPLICATION = "core.asgi.application"  # Django Channels
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -176,9 +176,13 @@ CORS_ALLOWED_ORIGINS = [
 ANYMAIL = {
     "MAILGUN_API_KEY": os.environ.get("MAILGUN_API_KEY"),
     "MAILGUN_SENDER_DOMAIN": os.environ.get("MAILGUN_SENDER_DOMAIN"),
+    "MAILGUN_API_URL": "https://api.mailgun.net/v3",
 }
+
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@example.com")
+EMAIL_TIMEOUT = 10
+EMAIL_FAIL_SILENTLY = False
 
 
 # --- Payments (Chappa) ---
@@ -187,7 +191,7 @@ CHAPPA_SECRET_KEY = os.environ.get("CHAPPA_SECRET_KEY")
 
 # --- API Docs (Spectacular) ---
 SPECTACULAR_SETTINGS = {
-    "TITLE": "The Agora API",
+    "TITLE": "The Agora Polling API",
     "DESCRIPTION": "Real-time online polling system backend.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
@@ -216,3 +220,59 @@ DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 # AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
 # AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 # AWS_S3_FILE_OVERWRITE = False
+
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
+FRONTEND_VERIFICATION_URL = os.environ.get("FRONTEND_VERIFICATION_URL")
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+# In core/settings.py, add this at the end of the file:
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "debug.log",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "authentication": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "notifications": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

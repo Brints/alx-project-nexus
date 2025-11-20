@@ -1,6 +1,15 @@
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-router = DefaultRouter()
-router.register(r"users", "users.views.UserViewSet", basename="user")
+from users.views import ResendEmailVerificationViewSet
 
-urlpatterns = router.urls
+router = DefaultRouter()
+router.register(
+    r"resend-verification",
+    ResendEmailVerificationViewSet,
+    basename="resend-email-verification"
+)
+
+urlpatterns = [
+    path("api/users/", include(router.urls)),
+]

@@ -71,4 +71,4 @@ def build_email_verification_link(user) -> str:
 
     base_url = getattr(settings, "FRONTEND_VERIFICATION_URL", None) or settings.SITE_URL
 
-    return f"{base_url.rstrip('/')}/verify-email?uid={uid}&token={token}"
+    return f"{base_url.rstrip('/')}/auth/verify-email?uid={uid}&token={token}"

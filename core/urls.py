@@ -14,7 +14,8 @@ urlpatterns = [
         name="swagger-ui",
     ),
     # --- API URLs ---
-    path("", include("authentication.urls")),  # Include authentication URLs
+    path("", include("authentication.urls")),
+    path("", include("users.urls")),
 ]
 
 if settings.DEBUG:

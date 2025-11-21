@@ -45,14 +45,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    class Role(models.TextChoices):
-        SUPER_ADMIN = "SUPER_ADMIN", "Super Admin"
-        ADMIN = "ADMIN", "Admin"
-        MODERATOR = "MODERATOR", "Moderator"
-        EDITOR = "EDITOR", "Editor"
-        MEMBER = "MEMBER", "Member"
-
-    role = models.CharField(max_length=50, choices=Role.choices, default=Role.MEMBER)
 
     user_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
@@ -72,6 +64,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     premium_expiry_date = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    country = models.CharField(max_length=50, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
@@ -91,21 +84,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def id(self):
         return self.user_id
-
-
-class UserProfile(models.Model):
-    profile_id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
-    )
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
-    user_name = models.CharField(max_length=50, unique=True, blank=True)
-    address = models.TextField(blank=True)
-    country = models.CharField(max_length=50, blank=True)
-    timezone = models.CharField(max_length=50, blank=True)
-
-    def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
 
 
 class UserVerification(models.Model):

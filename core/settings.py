@@ -49,9 +49,10 @@ INSTALLED_APPS = [
     "core",
     "users",
     "authentication",
-    # 'polls',
-    # 'payments',
-    # 'notifications',
+    'polls',
+    'payments',
+    'notifications',
+    'organizations',
 ]
 
 

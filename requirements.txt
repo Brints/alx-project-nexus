@@ -19,14 +19,17 @@ click-repl==0.3.0
 cloudinary==1.44.1
 colorama==0.4.6
 constantly==23.10.4
+cron_descriptor==2.0.6
 cryptography==46.0.3
 daphne==4.2.1
 dj-rest-auth==7.0.1
 Django==5.2.8
 django-anymail==13.1
+django-celery-beat==2.8.1
 django-cors-headers==4.9.0
 django-redis==6.0.0
 django-storages==1.14.6
+django-timezone-field==7.1
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.29.0
@@ -49,6 +52,7 @@ pyasn1_modules==0.4.2
 pycparser==2.23
 PyJWT==2.10.1
 pyOpenSSL==25.3.0
+python-crontab==3.3.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 PyYAML==6.0.3

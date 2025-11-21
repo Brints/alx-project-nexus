@@ -1,9 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 import uuid
-
-from rest_framework.exceptions import ValidationError
 
 
 class PollCategory(models.Model):

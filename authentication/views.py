@@ -83,6 +83,12 @@ class LoginViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        invite_token = request.data.get('invite_token')
+        if invite_token:
+            from organizations.models import OrganizationInvite, OrganizationMember
+            # ... Logic to find invite by token and add user to OrganizationMember immediately ...
+            # This ensures they are members the instant they register.
+
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
 

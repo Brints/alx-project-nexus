@@ -13,6 +13,6 @@ router.register(
 )
 
 urlpatterns = [
-    path("api/auth/", include(router.urls)),
+    path("auth/", include(router.urls)),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
 ]

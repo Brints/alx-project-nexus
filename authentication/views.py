@@ -85,9 +85,7 @@ class LoginViewSet(viewsets.GenericViewSet):
 
         invite_token = request.data.get('invite_token')
         if invite_token:
-            from organizations.models import OrganizationInvite, OrganizationMember
-            # ... Logic to find invite by token and add user to OrganizationMember immediately ...
-            # This ensures they are members the instant they register.
+            # TODO: optionally handle `invite_token` here to auto-join organizations on login.
 
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]

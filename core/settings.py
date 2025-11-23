@@ -279,3 +279,7 @@ LOGGING = {
         },
     },
 }
+
+# --- GeoIP Configuration ---
+GEOIP_PATH = BASE_DIR / 'geoip'
+GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'

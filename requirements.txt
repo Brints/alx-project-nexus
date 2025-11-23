@@ -1,3 +1,6 @@
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.2
+aiosignal==1.4.0
 amqp==5.3.1
 asgiref==3.10.0
 attrs==25.4.0
@@ -33,6 +36,8 @@ django-timezone-field==7.1
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.29.0
+frozenlist==1.8.0
+geoip2==5.2.0
 gunicorn==23.0.0
 hyperlink==21.0.0
 idna==3.11
@@ -42,10 +47,13 @@ jmespath==1.0.1
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 kombu==5.5.4
+maxminddb==3.0.0
 msgpack==1.1.2
+multidict==6.7.0
 packaging==25.0
 pillow==12.0.0
 prompt_toolkit==3.0.52
+propcache==0.4.1
 psycopg2-binary==2.9.11
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
@@ -74,4 +82,5 @@ uritemplate==4.2.0
 urllib3==2.5.0
 vine==5.1.0
 wcwidth==0.2.14
+yarl==1.22.0
 zope.interface==8.1

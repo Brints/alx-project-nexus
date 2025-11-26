@@ -1,0 +1,15 @@
+build:
+  docker:
+    web: Dockerfile
+    worker: Dockerfile
+
+release:
+  image: web
+  command:
+    - python manage.py migrate --noinput
+    - python manage.py collectstatic --noinput
+
+run:
+  web: daphne -b 0.0.0.0 -p $PORT core.asgi:application
+  worker: celery -A core worker --loglevel=info --concurrency=2
+  beat: celery -A core beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler

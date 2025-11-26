@@ -18,8 +18,16 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
+    "127.0.0.1",
+    "af64ab7848ce.ngrok-free.app",
+    ".ngrok-free.app"
 ]
 
+# Add this setting to allow POST requests (Login/Payments) via ngrok
+CSRF_TRUSTED_ORIGINS = [
+    "https://af64ab7848ce.ngrok-free.app",
+    "https://*.ngrok-free.app"
+]
 
 # --- Installed Apps ---
 # Application definition
@@ -166,6 +174,8 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "USER_ID_FIELD": "user_id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # TODO: Change this for production!
@@ -188,14 +198,17 @@ EMAIL_TIMEOUT = 10
 EMAIL_FAIL_SILENTLY = False
 
 
-# --- Payments (Chappa) ---
-CHAPPA_SECRET_KEY = os.environ.get("CHAPPA_SECRET_KEY")
+# --- Payments (Chapa) ---
+CHAPA_SECRET_KEY = os.environ.get("CHAPA_SECRET_KEY")
+CHAPA_WEBHOOK_SECRET = os.environ.get("CHAPA_WEBHOOK_SECRET", os.environ.get("CHAPA_SECRET_KEY"))
+FRONTEND_VERIFICATION_URL = os.environ.get("FRONTEND_VERIFICATION_URL", "http://localhost:8000")
+
 
 
 # --- API Docs (Spectacular) ---
 SPECTACULAR_SETTINGS = {
-    "TITLE": "The Agora Polling API",
-    "DESCRIPTION": "Real-time online polling system backend.",
+    "TITLE": "The Agora Poll API",
+    "DESCRIPTION": "API documentation for The Agora Poll application. A Real-time Online Poll System.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
@@ -225,7 +238,6 @@ DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 # AWS_S3_FILE_OVERWRITE = False
 
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000/api/")
-FRONTEND_VERIFICATION_URL = os.environ.get("FRONTEND_VERIFICATION_URL")
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
@@ -233,8 +245,6 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
-
-# In core/settings.py, add this at the end of the file:
 
 LOGGING = {
     "version": 1,
@@ -272,6 +282,16 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "organizations": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "payments": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
         "celery": {
             "handlers": ["console", "file"],
             "level": "INFO",
@@ -280,6 +300,7 @@ LOGGING = {
     },
 }
 
+
 # --- GeoIP Configuration ---
 GEOIP_PATH = BASE_DIR / 'geoip'
-GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'
+GEOIP_COUNTRY = 'GeoLite2-Country.csv'

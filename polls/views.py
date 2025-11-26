@@ -1,26 +1,40 @@
-from rest_framework import viewsets, status, permissions, filters
+from rest_framework import viewsets, status, permissions, filters, serializers
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 
-from .models import Poll, PollCategory
+from .models import Poll, PollCategory, PollOption, Vote
+from .permissions import CanCreateCategory, IsPollCreatorOrOrgAdmin
 from .serializers import PollCreateSerializer, PollListSerializer, PollCategorySerializer, VoteSerializer
-from .permissions import IsPollCreatorOrOrgAdmin
 from organizations.models import OrganizationMember
+from .utils import get_client_ip, get_country_from_ip
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+@extend_schema(tags=["Categories"])
+class CategoryViewSet(viewsets.ModelViewSet):
     queryset = PollCategory.objects.all()
     serializer_class = PollCategorySerializer
-    permission_classes = [permissions.AllowAny]
+    lookup_field = 'category_id'
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated(), CanCreateCategory()]
+        return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
+@extend_schema(tags=["Polls"])
 class PollViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsPollCreatorOrOrgAdmin]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['question', 'category__name']
+    search_fields = ['poll_question', 'poll_category__name']
     ordering_fields = ['created_at', 'end_date']
+    lookup_field = 'poll_id'
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -33,41 +47,94 @@ class PollViewSet(viewsets.ModelViewSet):
         1. Polls created by the user.
         2. Public polls.
         3. Private Organization polls WHERE user is a member.
+        Exception: For 'vote' action, return all active polls (validation happens in serializer).
         """
         user = self.request.user
 
-        # Get IDs of organizations the user belongs to
-        user_org_ids = OrganizationMember.objects.filter(user=user).values_list('organization_id', flat=True)
+        # For vote action, return all polls (permission check in serializer)
+        if self.action == 'vote':
+            return Poll.objects.all().select_related('poll_category', 'creator', 'organization')
+
+        # Anonymous users only see public polls
+        if user.is_anonymous:
+            return Poll.objects.filter(is_public=True)
+
+        # Get the Organization IDs where the user is a member
+        user_org_ids = OrganizationMember.objects.filter(user=user).values_list('organization', flat=True)
 
         return Poll.objects.filter(
             Q(creator=user) |
             Q(is_public=True) |
-            Q(organization__id__in=user_org_ids)
-        ).distinct().select_related('category', 'creator', 'organization')
+            Q(organization__in=user_org_ids)
+        ).distinct().select_related('poll_category', 'creator', 'organization')
 
+    @extend_schema(
+        summary="Manually Close a Poll",
+        request=None,
+        responses={200: {"description": "Poll closed successfully"}}
+    )
     @action(detail=True, methods=['post'])
-    def close(self, request, pk=None):
+    def close(self, request, poll_id=None):
         """
         Manual override to close a poll before expiry.
-        Only Creator or Org Admin can do this (handled by permission class).
+        - Organization polls: Only Org Admins can close
+        - Personal/Public polls: Only the creator can close
         """
         poll = self.get_object()
 
         if not poll.is_active:
-            return Response({"message": "Poll is already closed."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Poll is already closed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+
+        # Check permissions based on poll type
+        if poll.organization:
+            # Organization poll - must be admin
+            is_admin = OrganizationMember.objects.filter(
+                organization=poll.organization,
+                user=user,
+                role=OrganizationMember.Role.ADMIN
+            ).exists()
+
+            if not is_admin:
+                return Response(
+                    {"error": "Only organization admins can close this poll."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        else:
+            # Personal/Public poll - must be creator
+            if poll.creator != user:
+                return Response(
+                    {"error": "Only the poll creator can close this poll."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         poll.is_active = False
-        poll.end_date = timezone.now()  # Update end date to now
+        poll.manually_closed = True
+        poll.end_date = timezone.now()
         poll.save()
 
-        return Response({"message": "Poll closed successfully."}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Poll closed successfully."},
+            status=status.HTTP_200_OK
+        )
 
+    @extend_schema(
+        summary="Cast a Vote",
+        request=VoteSerializer,
+        responses={201: {"description": "Vote cast successfully"}}
+    )
     @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
-    def vote(self, request, pk=None):
+    def vote(self, request, poll_id=None):
         """
-        Endpoint: POST /api/polls/{id}/vote/
-        Body: { "option_id": 1 }
+        Vote on a poll.
+        Anonymous users can vote on Public polls (tracked by IP).
+        Authenticated users are tracked by User ID.
         """
+        # This calls get_object(), which calls get_queryset() (where the error was)
         poll = self.get_object()
 
         serializer = VoteSerializer(
@@ -89,3 +156,55 @@ class PollViewSet(viewsets.ModelViewSet):
             {"message": "Vote cast successfully."},
             status=status.HTTP_201_CREATED
         )
+
+def validate(self, attrs):
+    request = self.context['request']
+    user = request.user if request.user.is_authenticated else None
+    ip_address = get_client_ip(request)
+
+    option_id = attrs.get('option_id')
+    option = get_object_or_404(PollOption, pk=option_id)
+    poll = option.poll
+
+    if not poll.is_active:
+        raise serializers.ValidationError("This poll is closed.")
+
+    if poll.end_date < timezone.now():
+        raise serializers.ValidationError("This poll has expired.")
+
+    if not poll.is_public:
+        if not user:
+            raise serializers.ValidationError("You must be logged in to vote in this poll.")
+
+        is_member = OrganizationMember.objects.filter(
+            organization=poll.organization,
+            user=user
+        ).exists()
+
+        if not is_member:
+            org_name = poll.organization.org_name if poll.organization else "this organization"
+            raise serializers.ValidationError(
+                f"You must be a member of {org_name} to cast your vote."
+            )
+
+    if poll.allowed_country:
+        user_country = get_country_from_ip(ip_address)
+        if user_country != poll.allowed_country:
+            raise serializers.ValidationError(
+                f"This poll is restricted to voters in {poll.allowed_country}."
+            )
+
+    # Check for duplicate votes
+    if user:
+        if Vote.objects.filter(poll=poll, user=user).exists():
+            raise serializers.ValidationError("You have already voted in this poll.")
+    else:
+        if Vote.objects.filter(poll=poll, ip_address=ip_address).exists():
+            raise serializers.ValidationError(
+                "A vote has already been cast from this IP address."
+            )
+
+    attrs['poll'] = poll
+    attrs['option'] = option
+    attrs['ip_address'] = ip_address
+    return attrs

@@ -3,6 +3,35 @@ from rest_framework import serializers
 
 User = get_user_model()
 
+class UserOrganizationSerializer(serializers.Serializer):
+    """Serializer for user's organization membership"""
+    organization_id = serializers.UUIDField(source='organization.org_id')
+    organization_name = serializers.CharField(source='organization.org_name')
+    role = serializers.CharField()
+    joined_at = serializers.DateTimeField()
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for users to view and update their own profile.
+    """
+    organizations = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'user_id', 'email', 'first_name', 'last_name',
+            'phone_number', 'country', 'is_premium', 'date_joined',
+            'organizations'
+        ]
+        read_only_fields = ['user_id', 'email', 'is_premium', 'date_joined']
+
+    def get_organizations(self, obj):
+        memberships = obj.organization_memberships.select_related('organization').all()
+        if not memberships:
+            return None
+        return UserOrganizationSerializer(memberships, many=True).data
+
+
 
 class ResendEmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -13,22 +42,13 @@ class ResendEmailVerificationSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=normalized_email)
         except User.DoesNotExist:
-            # Generic message to avoid email enumeration
-            raise serializers.ValidationError(
-                "If an account with this email exists and is unverified, "
-                "a verification email will be sent."
-            )
+            return normalized_email
 
         if user.email_verified:
-            raise serializers.ValidationError(
-                "This email is already verified. Please log in."
-            )
+            raise serializers.ValidationError("This email is already verified. Please log in.")
 
         if not user.is_active:
-            raise serializers.ValidationError(
-                "This account is inactive. Please contact support."
-            )
+            raise serializers.ValidationError("This account is inactive. Please contact support.")
 
-        # Store user in context for the view to use
-        self.context['user'] = user
+        self.context['target_user'] = user
         return normalized_email

@@ -8,55 +8,70 @@ from .utils import get_client_ip, get_country_from_ip
 
 
 class PollCategorySerializer(serializers.ModelSerializer):
+    created_by = serializers.CharField(source='created_by.first_name', read_only=True, allow_null=True)
+
     class Meta:
         model = PollCategory
-        fields = ['id', 'name']
+        fields = ['category_id', 'name', 'created_by', 'created_at']
+        read_only_fields = ['category_id', 'created_by', 'created_at']
 
 
 class PollOptionSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = PollOption
         fields = ['id', 'text', 'image', 'vote_count']
-        read_only_fields = ['vote_count']
+        read_only_fields = ['vote_count', 'id']
 
 
 class PollCreateSerializer(serializers.ModelSerializer):
     options = PollOptionSerializer(many=True)
     organization_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
 
+    creator_name = serializers.CharField(source='creator.first_name', read_only=True)
+
     class Meta:
         model = Poll
         fields = [
             'poll_id', 'poll_question', 'poll_category', 'options',
             'start_date', 'end_date', 'is_public',
-            'allowed_country', 'organization_id'
+            'allowed_country', 'organization_id', 'creator_name'
         ]
+        read_only_fields = ['poll_id']
 
     def validate(self, attrs):
         user = self.context['request'].user
         org_id = attrs.get('organization_id')
 
+        # --- Category Validation ---
+        category = attrs.get('poll_category')
+        if not PollCategory.objects.filter(category_id=category.category_id).exists():
+            raise serializers.ValidationError({"poll_category": "Invalid category."})
+
+        # --- Date Validation ---
+        start = attrs.get('start_date', timezone.now())
+        end = attrs.get('end_date')
+        if end and start and end <= start:
+            raise serializers.ValidationError({"end_date": "End date must be after start date."})
+
         # --- Organization Permission Check ---
         if org_id:
             try:
                 org = Organization.objects.get(pk=org_id)
-                # Check if user is ADMIN of this org
                 is_admin = OrganizationMember.objects.filter(
                     organization=org,
                     user=user,
                     role=OrganizationMember.Role.ADMIN
                 ).exists()
 
-                # Owner is effectively an admin
                 if not is_admin and org.owner != user:
                     raise serializers.ValidationError(
                         {"organization": "You must be an Admin to create polls for this organization."})
             except Organization.DoesNotExist:
                 raise serializers.ValidationError({"organization": "Organization not found."})
 
-        # --- Freemium Limit (5 Polls/Month) ---
-        # Only apply limit if it's a personal poll (not org) and user is not premium
-        # Assuming you have an is_premium field or method on User
+        # --- Freemium Limit ---
         is_premium = getattr(user, 'is_premium', False)
 
         if not org_id and not is_premium:
@@ -74,7 +89,6 @@ class PollCreateSerializer(serializers.ModelSerializer):
                     "You have reached your limit of 5 polls per month. Upgrade to Premium for unlimited polls."
                 )
 
-        # --- Option Validation ---
         if len(attrs.get('options')) < 2:
             raise serializers.ValidationError({"options": "A poll must have at least 2 options."})
 
@@ -86,14 +100,12 @@ class PollCreateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         with transaction.atomic():
-            # Create Poll
             poll = Poll.objects.create(
                 creator=user,
                 organization_id=org_id,
                 **validated_data
             )
 
-            # Create Options
             poll_options = [
                 PollOption(poll=poll, **option_data)
                 for option_data in options_data
@@ -105,21 +117,23 @@ class PollCreateSerializer(serializers.ModelSerializer):
 
 class PollListSerializer(serializers.ModelSerializer):
     """Lighter serializer for listing polls"""
-    category = serializers.CharField(source='category.name')
+    category = serializers.CharField(source='poll_category.name')
     creator = serializers.CharField(source='creator.first_name')
     options_count = serializers.IntegerField(source='options.count', read_only=True)
+    organization_name = serializers.CharField(source='organization.org_name', read_only=True, allow_null=True)
+    total_votes = serializers.IntegerField(source='votes.count', read_only=True)
 
     class Meta:
         model = Poll
         fields = [
-            'id', 'question', 'category', 'creator',
+            'poll_id', 'poll_question', 'category', 'creator',
             'start_date', 'end_date', 'is_active',
-            'is_public', 'options_count', 'organization'
+            'is_public', 'options_count', 'organization_name', 'total_votes'
         ]
 
 
 class VoteSerializer(serializers.ModelSerializer):
-    option_id = serializers.IntegerField(write_only=True)
+    option_id = serializers.IntegerField(write_only=True, help_text="The ID of the option being voted for.")
 
     class Meta:
         model = Vote
@@ -131,19 +145,17 @@ class VoteSerializer(serializers.ModelSerializer):
         user = request.user if request.user.is_authenticated else None
         ip_address = get_client_ip(request)
 
-        # We get the Poll ID from the URL in the View, passed via context or saving logic
-        # But here we rely on the view passing the poll object or we look up via option
         option_id = attrs.get('option_id')
         option = get_object_or_404(PollOption, pk=option_id)
         poll = option.poll
 
-        # --- Is Poll Active? ---
-        if not poll.is_active or poll.is_expired:
+        if not poll.is_active:
             raise serializers.ValidationError("This poll is closed.")
 
-        # --- Organization Restrictions ---
+        if poll.end_date < timezone.now():
+            raise serializers.ValidationError("This poll is closed.")
+
         if not poll.is_public:
-            # Private poll: User MUST be logged in + Member of Org
             if not user:
                 raise serializers.ValidationError("You must be logged in to vote in this poll.")
 
@@ -155,29 +167,21 @@ class VoteSerializer(serializers.ModelSerializer):
             if not is_member:
                 raise serializers.ValidationError("You are not a member of the organization hosting this poll.")
 
-        # --- Geo-Restrictions ---
         if poll.allowed_country:
             user_country = get_country_from_ip(ip_address)
-            # If we can't determine IP (None), we strictly block if country is required
             if user_country != poll.allowed_country:
                 raise serializers.ValidationError(f"This poll is restricted to voters in {poll.allowed_country}.")
 
-        # --- Duplicate Voting Check ---
-        # Authenticated User Check
+        # Check for duplicate votes
         if user:
+            # Authenticated users: check by user ID only
             if Vote.objects.filter(poll=poll, user=user).exists():
                 raise serializers.ValidationError("You have already voted in this poll.")
-
-        # B. IP Address Check (for both Anon and Auth users to prevent rigging)
-        # Note: In some org environments, everyone shares 1 IP.
-        # If it's an ORG poll, we might skip IP check and rely on User ID.
-        should_check_ip = poll.is_public or (not poll.is_public and not user)
-
-        if should_check_ip:
+        else:
+            # Anonymous users: check by IP address only
             if Vote.objects.filter(poll=poll, ip_address=ip_address).exists():
                 raise serializers.ValidationError("A vote has already been cast from this IP address.")
 
-        # Store context for the save method
         attrs['poll'] = poll
         attrs['option'] = option
         attrs['ip_address'] = ip_address
@@ -187,7 +191,6 @@ class VoteSerializer(serializers.ModelSerializer):
         request = self.context['request']
         user = request.user if request.user.is_authenticated else None
 
-        # Create the vote
         vote = Vote.objects.create(
             poll=validated_data['poll'],
             option=validated_data['option'],

@@ -19,7 +19,7 @@ def get_country_from_ip(ip_address):
     """
     Resolves IP address to ISO Country Code (e.g., 'NG', 'US', 'GB') using GeoIP2.
     """
-    # 1. Handle Localhost / Private IPs immediately
+    # Handle Localhost / Private IPs immediately
     if ip_address in ['127.0.0.1', 'localhost', '::1'] or ip_address.startswith('192.168.'):
         return None
 

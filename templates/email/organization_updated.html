@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Updated - {{ org_name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4CAF50;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #4CAF50;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            margin: 20px 0;
+        }
+        .org-details {
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .org-details h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .detail-row {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            display: inline-block;
+            width: 140px;
+        }
+        .detail-value {
+            color: #333;
+        }
+        .changes-list {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .changes-list h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .change-item {
+            padding: 5px 0;
+            color: #856404;
+        }
+        .change-item::before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .meta-info {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🏢 Organization Updated</h1>
+        </div>
+
+        <div class="content">
+            <p>Hello <strong>{{ user_name }}</strong>,</p>
+
+            <p>Your organization <strong>{{ org_name }}</strong> has been successfully updated.</p>
+
+            {% if old_name != org_name %}
+            <div class="meta-info">
+                <strong>Note:</strong> Organization name changed from "<em>{{ old_name }}</em>" to "<em>{{ org_name }}</em>"
+            </div>
+            {% endif %}
+
+            {% if changes %}
+            <div class="changes-list">
+                <h4>📝 Updated Fields:</h4>
+                {% for change in changes %}
+                <div class="change-item">{{ change.field }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="org-details">
+                <h3>Current Organization Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{{ org_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ org_email }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Website:</span>
+                    <span class="detail-value"><a href="{{ org_url }}">{{ org_url }}</a></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">{{ org_description }}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{ dashboard_url }}" class="button">View Organization Dashboard</a>
+            </div>
+
+            <div class="meta-info">
+                <strong>Updated by:</strong> {{ updated_by }}
+            </div>
+
+            <p style="margin-top: 20px;">If you did not make this change or have any concerns, please contact our support team immediately.</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated notification from Agora Poll</p>
+            <p>© 2024 Agora Poll. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

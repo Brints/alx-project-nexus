@@ -6,7 +6,20 @@ import uuid
 
 
 class PollCategory(models.Model):
+    category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=50, unique=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_categories'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 
 
 class Poll(models.Model):
@@ -16,8 +29,13 @@ class Poll(models.Model):
 
     # Ownership & Context
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE, null=True, blank=True,
-                                     related_name='polls')
+    organization = models.ForeignKey(
+        'organizations.Organization',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='polls'
+    )
 
     # Lifecycle
     start_date = models.DateTimeField(default=timezone.now)
@@ -26,9 +44,12 @@ class Poll(models.Model):
     manually_closed = models.BooleanField(default=False)
 
     # Restrictions
-    is_public = models.BooleanField(default=True)  # If False, requires Org membership
-    allowed_country = models.CharField(max_length=2, blank=True,
-                                       help_text="ISO Country Code (e.g., NG, US). Leave empty for global.")
+    is_public = models.BooleanField(default=True)
+    allowed_country = models.CharField(
+        max_length=2,
+        blank=True,
+        help_text="ISO Country Code (e.g., NG, US). Leave empty for global."
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -61,7 +82,12 @@ class Vote(models.Model):
     option = models.ForeignKey(PollOption, on_delete=models.CASCADE)
 
     # Identity (One must be present)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     ip_address = models.GenericIPAddressField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

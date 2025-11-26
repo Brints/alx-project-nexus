@@ -9,12 +9,9 @@ class IsOrgAdminOrReadOnly(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any authenticated user
-        # (filtering is done in get_queryset to ensure they are members)
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Write permissions are only allowed to the owner or org admins
         return self._is_admin(request.user, obj)
 
     def _is_admin(self, user, org):
@@ -37,7 +34,6 @@ class IsOrgAdminForPolls(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        # We expect 'organization_id' in the request data
         org_id = request.data.get('organization')
         if not org_id:
             return True  # Not an org poll, standard rules apply
@@ -51,3 +47,22 @@ class IsOrgAdminForPolls(permissions.BasePermission):
             ).exists()
         except Organization.DoesNotExist:
             return False
+
+
+class IsOrgMemberToViewMembers(permissions.BasePermission):
+    """
+    Only organization members can view the members list.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        # Check if user is owner
+        if obj.owner == user:
+            return True
+
+        # Check if user is a member
+        return OrganizationMember.objects.filter(
+            organization=obj,
+            user=user
+        ).exists()

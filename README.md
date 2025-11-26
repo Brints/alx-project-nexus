@@ -54,6 +54,9 @@ To get started with The Agora, follow these steps:
    ```
 5. **Start the Development Server**:
    ```bash
+   ## Run command to initialize Categories
+   python manage.py initialize_poll_categories
+   
    python manage.py runserver
    
    ## Start Redis Server in another terminal:

@@ -2,7 +2,13 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import LoginViewSet, LogoutViewSet, RegisterViewSet, VerifyEmailViewSet
+from .views import (
+    LoginViewSet,
+    LogoutViewSet,
+    RegisterViewSet,
+    VerifyEmailViewSet,
+    CustomTokenRefreshView
+)
 
 router = DefaultRouter()
 router.register(r"register", RegisterViewSet, basename="authentication-register")
@@ -14,5 +20,5 @@ router.register(
 
 urlpatterns = [
     path("auth/", include(router.urls)),
-    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("auth/token/refresh/", CustomTokenRefreshView.as_view(), name="token-refresh"),
 ]

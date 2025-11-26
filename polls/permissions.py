@@ -23,4 +23,36 @@ class IsPollCreatorOrOrgAdmin(permissions.BasePermission):
             user=request.user,
             role=OrganizationMember.Role.ADMIN
         ).exists()
+
+
+class CanCreateCategory(permissions.BasePermission):
+    """
+    Permission to create poll categories:
+    - Superusers can create
+    - Premium users can create
+    - Organization admins can create
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        user = request.user
+
+        # Superuser check
+        if user.is_superuser:
+            return True
+
+        # Premium user check
+        if getattr(user, 'is_premium', False):
+            return True
+
+        # Organization admin check
+        is_org_admin = OrganizationMember.objects.filter(
+            user=user,
+            role=OrganizationMember.Role.ADMIN
+        ).exists()
+
+        return is_org_admin
+
     

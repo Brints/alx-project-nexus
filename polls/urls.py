@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import PollViewSet, CategoryViewSet
 
 router = DefaultRouter()
-router.register(r'categories', CategoryViewSet, basename='categories')
+router.register(r'categories', CategoryViewSet, basename='poll-categories')
 router.register(r'', PollViewSet, basename='polls')
 
 urlpatterns = [

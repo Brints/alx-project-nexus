@@ -47,7 +47,7 @@ def process_invite_token(user, token):
             )
             invite.status = 'ACCEPTED'
             invite.save()
-            logger.info(f"User {user.email} added to org {invite.organization.name} via token.")
+            logger.info(f"User {user.email} added to org {invite.organization.org_name} via token.")
     except Exception as e:
         # We don't want to fail registration/login just because an invite failed
         logger.warning(f"Failed to process invite token {token}: {str(e)}")

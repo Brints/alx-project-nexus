@@ -1,7 +1,9 @@
 import json
+import logging
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+logger = logging.getLogger(__name__)
 
 class PollConsumer(AsyncWebsocketConsumer):
     """
@@ -16,6 +18,7 @@ class PollConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Get poll_id from the URL route
         self.poll_id = self.scope["url_route"]["kwargs"]["poll_id"]
+        logger.info(f"WebSocket connected: poll_{self.poll_id}")
         self.room_group_name = f"poll_{self.poll_id}"
 
         # Join the room group

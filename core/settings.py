@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+import dj_database_url
 
 import cloudinary
 from dotenv import load_dotenv
@@ -16,14 +17,8 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "af64ab7848ce.ngrok-free.app",
-    ".ngrok-free.app"
-]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".herokuapp.com"] + os.environ.get("ALLOWED_HOSTS", "").split(",")
 
-# Add this setting to allow POST requests (Login/Payments) via ngrok
 CSRF_TRUSTED_ORIGINS = [
     "https://af64ab7848ce.ngrok-free.app",
     "https://*.ngrok-free.app"
@@ -63,10 +58,14 @@ INSTALLED_APPS = [
     'organizations',
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+# Enable compression and caching
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- Middleware ---
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -106,21 +105,58 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # --- Database (PostgreSQL) ---
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT"),
+# settings.py - Database section
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+        )
     }
-}
+    # Force SSL in production
+    if not DEBUG and 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+else:
+    # Fallback for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'agora_db'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
+    }
+
 
 
 # --- Cache & Channels (Redis) ---
+# settings.py - Redis section
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
+# Check if Redis requires SSL (rediss://)
+if REDIS_URL.startswith("rediss://"):
+    redis_config = {
+        "hosts": [{
+            "address": REDIS_URL,
+            "ssl_cert_reqs": None,
+        }],
+    }
+else:
+    # Standard Redis connection
+    redis_config = {"hosts": [REDIS_URL]}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": redis_config,
+    },
+}
+
+# Django-Redis cache also needs SSL handling
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -131,14 +167,12 @@ CACHES = {
     }
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
-        },
-    },
-}
+# Add SSL options for django-redis if needed
+if REDIS_URL.startswith("rediss://"):
+    CACHES["default"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {
+        "ssl_cert_reqs": None
+    }
+
 
 # --- Authentication ---
 AUTH_USER_MODEL = "users.User"
@@ -178,11 +212,25 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
-# TODO: Change this for production!
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # frontend
-    "http://127.0.0.1:3000",
-]
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://yourfrontend.com"
+    ).split(",")
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_BROWSER_XSS_FILTER = True
+
 
 
 # --- Email (Mailgun) ---
@@ -238,6 +286,7 @@ DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 # AWS_S3_FILE_OVERWRITE = False
 
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000/api/")
+WS_URL = os.environ.get("WS_URL", "ws://localhost:8000/")
 
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
@@ -245,6 +294,11 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+if REDIS_URL.startswith("rediss://"):
+    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': None}
+    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': None}
+
 
 LOGGING = {
     "version": 1,

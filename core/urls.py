@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from core.views import health_check
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 
@@ -21,6 +23,7 @@ urlpatterns = [
     path("api/v1/organizations/", include("organizations.urls")),
     path("api/v1/polls/", include("polls.urls")),
     path("api/v1/payments/", include("payments.urls")),
+    path("health/", health_check)
 ]
 
 if settings.DEBUG:

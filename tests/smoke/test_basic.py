@@ -32,6 +32,8 @@ def test_public_api_docs(api_url):
 
     try:
         response = requests.get(endpoint, timeout=10)
-        assert response.status_code == 200, f"Docs page failed with {response.status_code}"
+        assert (
+            response.status_code == 200
+        ), f"Docs page failed with {response.status_code}"
     except requests.exceptions.RequestException as e:
         pytest.fail(f"Connection to {endpoint} failed: {str(e)}")

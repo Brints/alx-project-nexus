@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 
 def get_client_ip(request):
     """Extract client IP from headers"""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
+        ip = x_forwarded_for.split(",")[0].strip()
     else:
-        ip = request.META.get('REMOTE_ADDR')
+        ip = request.META.get("REMOTE_ADDR")
     return ip
 
 
@@ -20,7 +20,9 @@ def get_country_from_ip(ip_address):
     Resolves IP address to ISO Country Code (e.g., 'NG', 'US', 'GB') using GeoIP2.
     """
     # Handle Localhost / Private IPs immediately
-    if ip_address in ['127.0.0.1', 'localhost', '::1'] or ip_address.startswith('192.168.'):
+    if ip_address in ["127.0.0.1", "localhost", "::1"] or ip_address.startswith(
+        "192.168."
+    ):
         return None
 
     db_path = settings.GEOIP_PATH / settings.GEOIP_COUNTRY

@@ -7,7 +7,7 @@ router.register(r"", UserViewSet, basename="users")
 router.register(
     r"resend-verification",
     ResendEmailVerificationViewSet,
-    basename="resend-email-verification"
+    basename="resend-email-verification",
 )
 
 urlpatterns = [

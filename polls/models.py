@@ -13,13 +13,12 @@ class PollCategory(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_categories'
+        related_name="created_categories",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
-
 
 
 class Poll(models.Model):
@@ -30,11 +29,11 @@ class Poll(models.Model):
     # Ownership & Context
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(
-        'organizations.Organization',
+        "organizations.Organization",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='polls'
+        related_name="polls",
     )
 
     # Lifecycle
@@ -48,7 +47,7 @@ class Poll(models.Model):
     allowed_country = models.CharField(
         max_length=2,
         blank=True,
-        help_text="ISO Country Code (e.g., NG, US). Leave empty for global."
+        help_text="ISO Country Code (e.g., NG, US). Leave empty for global.",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,7 +57,7 @@ class Poll(models.Model):
 
     def clean(self):
         if self.end_date <= self.start_date:
-            raise ValidationError('End date must be after start date.')
+            raise ValidationError("End date must be after start date.")
 
     @property
     def is_expired(self):
@@ -66,9 +65,9 @@ class Poll(models.Model):
 
 
 class PollOption(models.Model):
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='options')
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="options")
     text = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='poll_options/', null=True, blank=True)
+    image = models.ImageField(upload_to="poll_options/", null=True, blank=True)
 
     # Optimization: Store count here for read speed, update via Signals
     vote_count = models.BigIntegerField(default=0)
@@ -78,15 +77,12 @@ class PollOption(models.Model):
 
 
 class Vote(models.Model):
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='votes')
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="votes")
     option = models.ForeignKey(PollOption, on_delete=models.CASCADE)
 
     # Identity (One must be present)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
     )
     ip_address = models.GenericIPAddressField(null=True, blank=True)
 
@@ -94,6 +90,6 @@ class Vote(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['poll', 'user']),
-            models.Index(fields=['poll', 'ip_address']),
+            models.Index(fields=["poll", "user"]),
+            models.Index(fields=["poll", "ip_address"]),
         ]

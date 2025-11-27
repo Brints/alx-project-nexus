@@ -12,10 +12,18 @@ class ChapaService:
         self.base_url = "https://api.chapa.co/v1"
         self.headers = {
             "Authorization": f"Bearer {self.secret_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-    def initialize_payment(self, email, amount, first_name, last_name, return_url, phone_number="08098194719"):
+    def initialize_payment(
+        self,
+        email,
+        amount,
+        first_name,
+        last_name,
+        return_url,
+        phone_number="08098194719",
+    ):
         """
         Generates a unique reference and gets the checkout URL from Chapa.
         """
@@ -35,8 +43,8 @@ class ChapaService:
             "return_url": return_url,
             "customization": {
                 "title": "Agora Premium",
-                "description": "Unlock unlimited polling features."
-            }
+                "description": "Unlock unlimited polling features.",
+            },
         }
 
         try:
@@ -44,7 +52,7 @@ class ChapaService:
                 f"{self.base_url}/transaction/initialize",
                 json=payload,
                 headers=self.headers,
-                timeout=10
+                timeout=10,
             )
 
             if not response.ok:
@@ -53,19 +61,17 @@ class ChapaService:
 
             data = response.json()
 
-            if data.get('status') != 'success':
-                raise APIException(f"Chapa Error: {data.get('message', 'Unknown error')}")
+            if data.get("status") != "success":
+                raise APIException(
+                    f"Chapa Error: {data.get('message', 'Unknown error')}"
+                )
 
-            return {
-                "checkout_url": data['data']['checkout_url'],
-                "reference": tx_ref
-            }
+            return {"checkout_url": data["data"]["checkout_url"], "reference": tx_ref}
 
         except requests.exceptions.Timeout:
             raise APIException("Payment gateway timeout. Please try again.")
         except requests.exceptions.RequestException as e:
             raise APIException(f"Payment Gateway Error: {str(e)}")
-
 
     def verify_payment(self, tx_ref):
         """
@@ -75,7 +81,7 @@ class ChapaService:
             response = requests.get(
                 f"{self.base_url}/transaction/verify/{tx_ref}",
                 headers=self.headers,
-                timeout=10
+                timeout=10,
             )
             response.raise_for_status()
             return response.json()
@@ -91,14 +97,12 @@ class ChapaService:
         if not signature_header:
             return False
 
-        webhook_secret = getattr(settings, 'CHAPA_WEBHOOK_SECRET', settings.CHAPA_SECRET_KEY)
-        secret = webhook_secret.encode('utf-8')
+        webhook_secret = getattr(
+            settings, "CHAPA_WEBHOOK_SECRET", settings.CHAPA_SECRET_KEY
+        )
+        secret = webhook_secret.encode("utf-8")
 
         # Compute HMAC
-        computed_signature = hmac.new(
-            secret,
-            request_body,
-            hashlib.sha256
-        ).hexdigest()
+        computed_signature = hmac.new(secret, request_body, hashlib.sha256).hexdigest()
 
         return hmac.compare_digest(computed_signature, signature_header)

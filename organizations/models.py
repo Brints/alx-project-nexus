@@ -14,14 +14,12 @@ class Organization(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='owned_organizations'
+        related_name="owned_organizations",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     join_code = models.CharField(
-        max_length=50,
-        unique=True,
-        default=secrets.token_urlsafe
+        max_length=50, unique=True, default=secrets.token_urlsafe
     )
 
     def __str__(self):
@@ -30,18 +28,23 @@ class Organization(models.Model):
 
 class OrganizationMember(models.Model):
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Admin'
-        MEMBER = 'MEMBER', 'Member'
+        ADMIN = "ADMIN", "Admin"
+        MEMBER = "MEMBER", "Member"
 
     member_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='members')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                             related_name='organization_memberships')
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="members"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="organization_memberships",
+    )
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.MEMBER)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('organization', 'user')
+        unique_together = ("organization", "user")
 
     def __str__(self):
         return f"{self.user.email} - {self.organization.org_name} ({self.role})"
@@ -51,9 +54,9 @@ class OrganizationInvite(models.Model):
     """Handles the email invite flow"""
 
     class Status(models.TextChoices):
-        PENDING = 'PENDING', 'Pending'
-        ACCEPTED = 'ACCEPTED', 'Accepted'
-        EXPIRED = 'EXPIRED', 'Expired'
+        PENDING = "PENDING", "Pending"
+        ACCEPTED = "ACCEPTED", "Accepted"
+        EXPIRED = "EXPIRED", "Expired"
 
     invite_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -61,7 +64,11 @@ class OrganizationInvite(models.Model):
     token = models.CharField(max_length=64, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
 
     def __str__(self):
-        return f"Invite to {self.email} for {self.organization.org_name} ({self.status})"
+        return (
+            f"Invite to {self.email} for {self.organization.org_name} ({self.status})"
+        )

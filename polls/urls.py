@@ -3,9 +3,9 @@ from rest_framework.routers import DefaultRouter
 from .views import PollViewSet, CategoryViewSet
 
 router = DefaultRouter()
-router.register(r'categories', CategoryViewSet, basename='poll-categories')
-router.register(r'', PollViewSet, basename='polls')
+router.register(r"categories", CategoryViewSet, basename="poll-categories")
+router.register(r"", PollViewSet, basename="polls")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

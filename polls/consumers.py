@@ -5,6 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 logger = logging.getLogger(__name__)
 
+
 class PollConsumer(AsyncWebsocketConsumer):
     """
     This consumer handles WebSocket connections for real-time poll results.

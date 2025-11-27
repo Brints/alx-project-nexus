@@ -23,31 +23,26 @@ def _verify_email(uid, token):
         logger.warning(f"Invalid UID in verification: {uid}")
         return Response(
             {"message": "Invalid verification link."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     if user.email_verified:
-        UserVerification.objects.filter(
-            user=user,
-            verification_type='email'
-        ).delete()
+        UserVerification.objects.filter(user=user, verification_type="email").delete()
         return Response(
-            {"message": "Email is already verified."},
-            status=status.HTTP_200_OK
+            {"message": "Email is already verified."}, status=status.HTTP_200_OK
         )
 
     try:
         verification = UserVerification.objects.get(
             user=user,
-            verification_type='email',
+            verification_type="email",
             verification_code=token,
-            is_verified=False
+            is_verified=False,
         )
     except UserVerification.DoesNotExist:
         logger.warning(f"Token not found for user: {user.email}")
         return Response(
-            {"message": "Invalid or expired token."},
-            status=status.HTTP_400_BAD_REQUEST
+            {"message": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST
         )
 
     if verification.is_expired():
@@ -55,24 +50,22 @@ def _verify_email(uid, token):
         logger.info(f"Expired token deleted for user: {user.email}")
         return Response(
             {"message": "Token has expired. Please request a new verification email."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     if not email_verification_token.check_token(user, token):
         verification.delete()
         logger.warning(f"Invalid token format for user: {user.email}")
         return Response(
-            {"message": "Invalid token."},
-            status=status.HTTP_400_BAD_REQUEST
+            {"message": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST
         )
 
     with transaction.atomic():
         user.email_verified = True
-        user.save(update_fields=['email_verified'])
+        user.save(update_fields=["email_verified"])
         verification.delete()
 
     logger.info(f"Email verified successfully for: {user.email}")
     return Response(
-        {"message": "Email verified successfully."},
-        status=status.HTTP_200_OK
+        {"message": "Email verified successfully."}, status=status.HTTP_200_OK
     )

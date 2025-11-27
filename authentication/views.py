@@ -34,20 +34,17 @@ def process_invite_token(user, token):
         # Import inside function to avoid circular dependency
         from organizations.models import OrganizationInvite, OrganizationMember
 
-        invite = OrganizationInvite.objects.get(
-            token=token,
-            status='PENDING'
-        )
+        invite = OrganizationInvite.objects.get(token=token, status="PENDING")
 
         if invite.expires_at > timezone.now():
             OrganizationMember.objects.get_or_create(
-                organization=invite.organization,
-                user=user,
-                defaults={'role': 'MEMBER'}
+                organization=invite.organization, user=user, defaults={"role": "MEMBER"}
             )
-            invite.status = 'ACCEPTED'
+            invite.status = "ACCEPTED"
             invite.save()
-            logger.info(f"User {user.email} added to org {invite.organization.org_name} via token.")
+            logger.info(
+                f"User {user.email} added to org {invite.organization.org_name} via token."
+            )
     except Exception as e:
         # We don't want to fail registration/login just because an invite failed
         logger.warning(f"Failed to process invite token {token}: {str(e)}")
@@ -64,7 +61,7 @@ class RegisterViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        invite_token = serializer.validated_data.get('invite_token')
+        invite_token = serializer.validated_data.get("invite_token")
 
         try:
             with transaction.atomic():
@@ -180,21 +177,31 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
     @extend_schema(
         summary="Verify Email (via Link)",
         parameters=[
-            OpenApiParameter(name='uid', location=OpenApiParameter.QUERY, description='Encoded User ID', required=True,
-                             type=str),
-            OpenApiParameter(name='token', location=OpenApiParameter.QUERY, description='Verification Token',
-                             required=True, type=str),
-        ]
+            OpenApiParameter(
+                name="uid",
+                location=OpenApiParameter.QUERY,
+                description="Encoded User ID",
+                required=True,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="token",
+                location=OpenApiParameter.QUERY,
+                description="Verification Token",
+                required=True,
+                type=str,
+            ),
+        ],
     )
     def list(self, request):
         """Handle GET requests from email verification links"""
-        uid = request.query_params.get('uid')
-        token = request.query_params.get('token')
+        uid = request.query_params.get("uid")
+        token = request.query_params.get("token")
 
         if not uid or not token:
             return Response(
                 {"message": "Invalid verification link. Missing parameters."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         return _verify_email(uid, token)
@@ -205,8 +212,8 @@ class VerifyEmailViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        uid = serializer.validated_data['uid']
-        token = serializer.validated_data['token']
+        uid = serializer.validated_data["uid"]
+        token = serializer.validated_data["token"]
 
         return _verify_email(uid, token)
 
@@ -216,4 +223,5 @@ class CustomTokenRefreshView(TokenRefreshView):
     """
     Takes a refresh token and returns a new access token.
     """
+
     pass

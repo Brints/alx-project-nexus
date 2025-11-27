@@ -70,7 +70,9 @@ def build_email_verification_link(user) -> str:
     UserVerification.create_verification(user, "email", token, expiration)
 
     base_url = getattr(settings, "FRONTEND_VERIFICATION_URL", None) or settings.SITE_URL
-    verification_link = f"{settings.SITE_URL}v1/auth/verify-email/?uid={uid}&token={token}"
+    verification_link = (
+        f"{settings.SITE_URL}v1/auth/verify-email/?uid={uid}&token={token}"
+    )
 
     return verification_link
     ############ Alternative if frontend URL is different ############

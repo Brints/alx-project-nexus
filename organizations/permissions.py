@@ -21,9 +21,7 @@ class IsOrgAdminOrReadOnly(permissions.BasePermission):
 
         # Check if Admin member
         return OrganizationMember.objects.filter(
-            organization=org,
-            user=user,
-            role=OrganizationMember.Role.ADMIN
+            organization=org, user=user, role=OrganizationMember.Role.ADMIN
         ).exists()
 
 
@@ -34,17 +32,20 @@ class IsOrgAdminForPolls(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        org_id = request.data.get('organization')
+        org_id = request.data.get("organization")
         if not org_id:
             return True  # Not an org poll, standard rules apply
 
         try:
             org = Organization.objects.get(pk=org_id)
-            return org.owner == request.user or OrganizationMember.objects.filter(
-                organization=org,
-                user=request.user,
-                role=OrganizationMember.Role.ADMIN
-            ).exists()
+            return (
+                org.owner == request.user
+                or OrganizationMember.objects.filter(
+                    organization=org,
+                    user=request.user,
+                    role=OrganizationMember.Role.ADMIN,
+                ).exists()
+            )
         except Organization.DoesNotExist:
             return False
 
@@ -62,7 +63,4 @@ class IsOrgMemberToViewMembers(permissions.BasePermission):
             return True
 
         # Check if user is a member
-        return OrganizationMember.objects.filter(
-            organization=obj,
-            user=user
-        ).exists()
+        return OrganizationMember.objects.filter(organization=obj, user=user).exists()

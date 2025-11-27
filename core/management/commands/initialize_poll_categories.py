@@ -3,30 +3,30 @@ from polls.models import PollCategory
 
 
 class Command(BaseCommand):
-    help = 'Initialize default poll categories'
+    help = "Initialize default poll categories"
 
     def handle(self, *args, **options):
         default_categories = [
-            'Technology',
-            'Entertainment',
-            'Sports',
-            'Politics',
-            'Health',
-            'Education',
-            'Business',
-            'Science',
-            'Travel',
-            'Food & Dining',
-            'Fashion',
-            'Music',
-            'Movies & TV',
-            'Gaming',
-            'Social Issues',
-            'Environment',
-            'Finance',
-            'Lifestyle',
-            'Arts & Culture',
-            'Other'
+            "Technology",
+            "Entertainment",
+            "Sports",
+            "Politics",
+            "Health",
+            "Education",
+            "Business",
+            "Science",
+            "Travel",
+            "Food & Dining",
+            "Fashion",
+            "Music",
+            "Movies & TV",
+            "Gaming",
+            "Social Issues",
+            "Environment",
+            "Finance",
+            "Lifestyle",
+            "Arts & Culture",
+            "Other",
         ]
 
         created_count = 0
@@ -34,19 +34,18 @@ class Command(BaseCommand):
 
         for category_name in default_categories:
             _, created = PollCategory.objects.get_or_create(
-                name=category_name,
-                defaults={'created_by': None}
+                name=category_name, defaults={"created_by": None}
             )
             if created:
                 created_count += 1
                 self.stdout.write(
-                    self.style.SUCCESS(f'Created category: {category_name}')
+                    self.style.SUCCESS(f"Created category: {category_name}")
                 )
             else:
                 existing_count += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'\nSummary: {created_count} created, {existing_count} already existed'
+                f"\nSummary: {created_count} created, {existing_count} already existed"
             )
         )

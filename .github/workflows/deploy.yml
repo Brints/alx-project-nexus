@@ -70,12 +70,12 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          curl -f -L https://${{ secrets.HEROKU_APP_NAME }}-app-529cb13f68c9.herokuapp.com/health/ || exit 1
+          curl -f -L https://${{ secrets.HEROKU_APP_NAME }}-529cb13f68c9.herokuapp.com/health/ || exit 1
 
       - name: Run Smoke Tests
         run: |
           pip install requests pytest
-          pytest tests/smoke/ --url=https://${{ secrets.HEROKU_APP_NAME }}-app-529cb13f68c9.herokuapp.com
+          pytest tests/smoke/ --url=https://${{ secrets.HEROKU_APP_NAME }}-529cb13f68c9.herokuapp.com
         continue-on-error: true
 
       - name: Notify Deployment Success

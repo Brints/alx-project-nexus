@@ -33,7 +33,6 @@ jobs:
           username: ${{ secrets.HEROKU_EMAIL }}
           password: ${{ secrets.HEROKU_API_KEY }}
 
-      # 1. Build WEB (Standard)
       - name: Build and Push Web Image
         uses: docker/build-push-action@v6
         with:
@@ -46,7 +45,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 2. Build WORKER (Custom CMD)
       - name: Create Worker Dockerfile
         run: |
           cp Dockerfile Dockerfile.worker
@@ -67,7 +65,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 3. Build BEAT (Custom CMD)
       - name: Create Beat Dockerfile
         run: |
           cp Dockerfile Dockerfile.beat
@@ -111,14 +108,14 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Running migrations manually to ensure DB is consistent..."
-          heroku run python manage.py migrate --noinput -a ${{ secrets.HEROKU_APP_NAME }}
+          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py migrate --noinput
 
       - name: Collect Static Files
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Collecting static files..."
-          heroku run python manage.py collectstatic --noinput -a ${{ secrets.HEROKU_APP_NAME }}
+          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py collectstatic --noinput
 
       - name: Wait for Deployment
         run: sleep 30

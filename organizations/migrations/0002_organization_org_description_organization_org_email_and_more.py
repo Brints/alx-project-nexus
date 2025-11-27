@@ -6,26 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0001_initial'),
+        ("organizations", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='org_description',
-            field=models.TextField(default='This is a test description'),
+            model_name="organization",
+            name="org_description",
+            field=models.TextField(default="This is a test description"),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='organization',
-            name='org_email',
-            field=models.EmailField(default='test@organization.org', max_length=254),
+            model_name="organization",
+            name="org_email",
+            field=models.EmailField(default="test@organization.org", max_length=254),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='organization',
-            name='org_url',
-            field=models.URLField(default='https://test-org.org'),
+            model_name="organization",
+            name="org_url",
+            field=models.URLField(default="https://test-org.org"),
             preserve_default=False,
         ),
     ]

@@ -7,7 +7,7 @@ from .views import (
     LogoutViewSet,
     RegisterViewSet,
     VerifyEmailViewSet,
-    CustomTokenRefreshView
+    CustomTokenRefreshView,
 )
 
 router = DefaultRouter()

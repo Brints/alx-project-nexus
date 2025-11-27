@@ -12,59 +12,167 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('organizations', '0004_convert_member_id_to_uuid'),
+        ("organizations", "0004_convert_member_id_to_uuid"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PollCategory',
+            name="PollCategory",
             fields=[
-                ('category_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=50, unique=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_categories', to=settings.AUTH_USER_MODEL)),
+                (
+                    "category_id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=50, unique=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_categories",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Poll',
+            name="Poll",
             fields=[
-                ('poll_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('poll_question', models.CharField(max_length=255)),
-                ('start_date', models.DateTimeField(default=django.utils.timezone.now)),
-                ('end_date', models.DateTimeField()),
-                ('is_active', models.BooleanField(default=True)),
-                ('manually_closed', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
-                ('allowed_country', models.CharField(blank=True, help_text='ISO Country Code (e.g., NG, US). Leave empty for global.', max_length=2)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('organization', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='polls', to='organizations.organization')),
-                ('poll_category', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='polls.pollcategory')),
+                (
+                    "poll_id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("poll_question", models.CharField(max_length=255)),
+                ("start_date", models.DateTimeField(default=django.utils.timezone.now)),
+                ("end_date", models.DateTimeField()),
+                ("is_active", models.BooleanField(default=True)),
+                ("manually_closed", models.BooleanField(default=False)),
+                ("is_public", models.BooleanField(default=True)),
+                (
+                    "allowed_country",
+                    models.CharField(
+                        blank=True,
+                        help_text="ISO Country Code (e.g., NG, US). Leave empty for global.",
+                        max_length=2,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "organization",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="polls",
+                        to="organizations.organization",
+                    ),
+                ),
+                (
+                    "poll_category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="polls.pollcategory",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='PollOption',
+            name="PollOption",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.CharField(max_length=255)),
-                ('image', models.ImageField(blank=True, null=True, upload_to='poll_options/')),
-                ('vote_count', models.BigIntegerField(default=0)),
-                ('poll', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='options', to='polls.poll')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("text", models.CharField(max_length=255)),
+                (
+                    "image",
+                    models.ImageField(blank=True, null=True, upload_to="poll_options/"),
+                ),
+                ("vote_count", models.BigIntegerField(default=0)),
+                (
+                    "poll",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="options",
+                        to="polls.poll",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Vote',
+            name="Vote",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('option', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='polls.polloption')),
-                ('poll', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='votes', to='polls.poll')),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "option",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="polls.polloption",
+                    ),
+                ),
+                (
+                    "poll",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="votes",
+                        to="polls.poll",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'indexes': [models.Index(fields=['poll', 'user'], name='polls_vote_poll_id_cfe401_idx'), models.Index(fields=['poll', 'ip_address'], name='polls_vote_poll_id_78814d_idx')],
+                "indexes": [
+                    models.Index(
+                        fields=["poll", "user"], name="polls_vote_poll_id_cfe401_idx"
+                    ),
+                    models.Index(
+                        fields=["poll", "ip_address"],
+                        name="polls_vote_poll_id_78814d_idx",
+                    ),
+                ],
             },
         ),
     ]

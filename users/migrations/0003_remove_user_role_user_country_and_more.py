@@ -6,25 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0002_alter_userverification_verification_code'),
+        ("users", "0002_alter_userverification_verification_code"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='user',
-            name='role',
+            model_name="user",
+            name="role",
         ),
         migrations.AddField(
-            model_name='user',
-            name='country',
+            model_name="user",
+            name="country",
             field=models.CharField(blank=True, max_length=50),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='phone_number',
+            model_name="user",
+            name="phone_number",
             field=models.CharField(blank=True, max_length=20),
         ),
         migrations.DeleteModel(
-            name='UserProfile',
+            name="UserProfile",
         ),
     ]

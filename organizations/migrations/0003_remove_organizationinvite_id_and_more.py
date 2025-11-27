@@ -7,26 +7,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0002_organization_org_description_organization_org_email_and_more'),
+        (
+            "organizations",
+            "0002_organization_org_description_organization_org_email_and_more",
+        ),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='organizationinvite',
-            name='id',
+            model_name="organizationinvite",
+            name="id",
         ),
         migrations.RemoveField(
-            model_name='organizationmember',
-            name='id',
+            model_name="organizationmember",
+            name="id",
         ),
         migrations.AddField(
-            model_name='organizationinvite',
-            name='invite_id',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
+            model_name="organizationinvite",
+            name="invite_id",
+            field=models.UUIDField(
+                default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+            ),
         ),
         migrations.AddField(
-            model_name='organizationmember',
-            name='member_id',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
+            model_name="organizationmember",
+            name="member_id",
+            field=models.UUIDField(
+                default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+            ),
         ),
     ]

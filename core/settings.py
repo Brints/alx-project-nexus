@@ -17,11 +17,13 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".herokuapp.com"] + os.environ.get("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".herokuapp.com"] + os.environ.get(
+    "ALLOWED_HOSTS", ""
+).split(",")
 
 CSRF_TRUSTED_ORIGINS = [
     "https://af64ab7848ce.ngrok-free.app",
-    "https://*.ngrok-free.app"
+    "https://*.ngrok-free.app",
 ]
 
 # --- Installed Apps ---
@@ -52,10 +54,10 @@ INSTALLED_APPS = [
     "core",
     "users",
     "authentication",
-    'polls',
-    'payments',
-    'notifications',
-    'organizations',
+    "polls",
+    "payments",
+    "notifications",
+    "organizations",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -106,44 +108,39 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # --- Database (PostgreSQL) ---
 # settings.py - Database section
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
+        "default": dj_database_url.parse(
+            DATABASE_URL, conn_max_age=600, ssl_require=True
         )
     }
-    # Force SSL in production
-    if not DEBUG and 'OPTIONS' not in DATABASES['default']:
-        DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 else:
     # Fallback for local development
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'agora_db'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", "agora_db"),
+            "USER": os.environ.get("DB_USER", "postgres"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", "postgres"),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
         }
     }
 
 
-
 # --- Cache & Channels (Redis) ---
-# settings.py - Redis section
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
-# Check if Redis requires SSL (rediss://)
 if REDIS_URL.startswith("rediss://"):
     redis_config = {
-        "hosts": [{
-            "address": REDIS_URL,
-            "ssl_cert_reqs": None,
-        }],
+        "hosts": [
+            {
+                "address": REDIS_URL,
+                "ssl_cert_reqs": None,
+            }
+        ],
     }
 else:
     # Standard Redis connection
@@ -169,9 +166,7 @@ CACHES = {
 
 # Add SSL options for django-redis if needed
 if REDIS_URL.startswith("rediss://"):
-    CACHES["default"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {
-        "ssl_cert_reqs": None
-    }
+    CACHES["default"]["OPTIONS"]["CONNECTION_POOL_KWARGS"] = {"ssl_cert_reqs": None}
 
 
 # --- Authentication ---
@@ -219,8 +214,7 @@ if DEBUG:
     ]
 else:
     CORS_ALLOWED_ORIGINS = os.environ.get(
-        "CORS_ALLOWED_ORIGINS",
-        "https://yourfrontend.com"
+        "CORS_ALLOWED_ORIGINS", "https://yourfrontend.com"
     ).split(",")
 
 if not DEBUG:
@@ -230,7 +224,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_BROWSER_XSS_FILTER = True
-
 
 
 # --- Email (Mailgun) ---
@@ -248,9 +241,12 @@ EMAIL_FAIL_SILENTLY = False
 
 # --- Payments (Chapa) ---
 CHAPA_SECRET_KEY = os.environ.get("CHAPA_SECRET_KEY")
-CHAPA_WEBHOOK_SECRET = os.environ.get("CHAPA_WEBHOOK_SECRET", os.environ.get("CHAPA_SECRET_KEY"))
-FRONTEND_VERIFICATION_URL = os.environ.get("FRONTEND_VERIFICATION_URL", "http://localhost:8000")
-
+CHAPA_WEBHOOK_SECRET = os.environ.get(
+    "CHAPA_WEBHOOK_SECRET", os.environ.get("CHAPA_SECRET_KEY")
+)
+FRONTEND_VERIFICATION_URL = os.environ.get(
+    "FRONTEND_VERIFICATION_URL", "http://localhost:8000"
+)
 
 
 # --- API Docs (Spectacular) ---
@@ -296,8 +292,8 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 if REDIS_URL.startswith("rediss://"):
-    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': None}
-    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': None}
+    CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": None}
+    CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": None}
 
 
 LOGGING = {
@@ -356,5 +352,5 @@ LOGGING = {
 
 
 # --- GeoIP Configuration ---
-GEOIP_PATH = BASE_DIR / 'geoip'
-GEOIP_COUNTRY = 'GeoLite2-Country.csv'
+GEOIP_PATH = BASE_DIR / "geoip"
+GEOIP_COUNTRY = "GeoLite2-Country.csv"

@@ -1,6 +1,7 @@
 from rest_framework import permissions
 from organizations.models import Organization, OrganizationMember
 
+
 class IsPollCreatorOrOrgAdmin(permissions.BasePermission):
     """
     Custom permission:
@@ -21,7 +22,7 @@ class IsPollCreatorOrOrgAdmin(permissions.BasePermission):
         return OrganizationMember.objects.filter(
             organization=obj.organization,
             user=request.user,
-            role=OrganizationMember.Role.ADMIN
+            role=OrganizationMember.Role.ADMIN,
         ).exists()
 
 
@@ -44,15 +45,12 @@ class CanCreateCategory(permissions.BasePermission):
             return True
 
         # Premium user check
-        if getattr(user, 'is_premium', False):
+        if getattr(user, "is_premium", False):
             return True
 
         # Organization admin check
         is_org_admin = OrganizationMember.objects.filter(
-            user=user,
-            role=OrganizationMember.Role.ADMIN
+            user=user, role=OrganizationMember.Role.ADMIN
         ).exists()
 
         return is_org_admin
-
-    

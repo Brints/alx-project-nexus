@@ -108,7 +108,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Running migrations manually to ensure DB is consistent..."
-          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py migrate --noinput
+          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py migrate
 
       - name: Collect Static Files
         env:

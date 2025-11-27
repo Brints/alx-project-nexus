@@ -115,7 +115,7 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "Collecting static files..."
-          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py collectstatic --noinput
+          heroku run -a ${{ secrets.HEROKU_APP_NAME }} python manage.py collectstatic
 
       - name: Wait for Deployment
         run: sleep 30

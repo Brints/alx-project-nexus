@@ -70,7 +70,7 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          curl -f https://${{ secrets.HEROKU_APP_NAME }}.herokuapp.com/health || exit 1
+          curl -f -L https://${{ secrets.HEROKU_APP_NAME }}.herokuapp.com/health/ || exit 1
 
       - name: Run Smoke Tests
         run: |

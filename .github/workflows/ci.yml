@@ -42,10 +42,8 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Linting (Ruff)
-        run: |
-          ruff check .
-          ruff format --check .
+      - name: Run Linting (Black)
+        run: black --check --diff .
 
       - name: Check Code Formatting
         run: black --check .

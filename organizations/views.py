@@ -167,7 +167,6 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         responses={200: {"description": "Invite sent"}},
     )
     @action(detail=True, methods=["post"], url_path="invite")
-    @action(detail=True, methods=["post"], url_path="invite")
     def send_invite(self, request, org_id=None):
         """Send an email invite to join the organization."""
         org = self.get_object()

@@ -10,6 +10,18 @@ jobs:
   test:
     name: Run Tests & Lint
     runs-on: ubuntu-latest
+
+    env:
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: agora_db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_HOST: localhost
+      DB_PORT: 5432
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: "django-insecure-test-key-just-for-ci"
+      DEBUG: "True"
+
     services:
       postgres:
         image: postgres:15
@@ -48,20 +60,6 @@ jobs:
       - name: Check Code Formatting
         run: black --check .
 
-      - name: Run Django Tests
-        env:
-          DB_ENGINE: django.db.backends.postgresql
-          DB_NAME: agora_db
-          DB_USER: postgres
-          DB_PASSWORD: password
-          DB_HOST: localhost
-          DB_PORT: 5432
-          REDIS_URL: redis://localhost:6379/0
-          SECRET_KEY: "django-insecure-test-key-just-for-ci"
-          DEBUG: "True"
-        run: |
-          python manage.py test
-
       - name: Run Tests with Coverage
         run: |
           pip install coverage
@@ -71,9 +69,10 @@ jobs:
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
+        with:
+            fail_ci_if_error: false
 
       - name: Security Check
         run: |
           pip install safety
           safety check --json
-      

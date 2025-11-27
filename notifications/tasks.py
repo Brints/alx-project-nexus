@@ -61,27 +61,27 @@ def send_daily_summary_emails():
 
     logger.info("Starting daily summary email task")
 
-    organizations = Organization.objects.prefetch_related('members', 'polls').all()
+    organizations = Organization.objects.prefetch_related("members", "polls").all()
     sent_count = 0
 
     for org in organizations:
-        admin_emails = list(org.members.filter(
-            role='admin'
-        ).values_list('email', flat=True))
+        admin_emails = list(
+            org.members.filter(role="admin").values_list("email", flat=True)
+        )
 
         if admin_emails:
             # Get org statistics
             context = {
-                'organization_name': org.org_name,
-                'total_polls': org.polls.count(),
-                'active_polls': org.polls.filter(is_active=True).count(),
+                "organization_name": org.org_name,
+                "total_polls": org.polls.count(),
+                "active_polls": org.polls.filter(is_active=True).count(),
             }
 
             send_email_task.delay(
                 subject=f"Daily Summary for {org.org_name}",
                 recipients=admin_emails,
-                template_name='send_daily_summary_emails_to_org_admin.html',
-                context=context
+                template_name="send_daily_summary_emails_to_org_admin.html",
+                context=context,
             )
             sent_count += 1
 

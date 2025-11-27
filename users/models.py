@@ -77,10 +77,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Generate verification link for the user"""
         try:
             verification = self.verifications.filter(
-                verification_type='email',
+                verification_type="email",
                 is_verified=False,
-                expires_at__gt=timezone.now()
-            ).latest('created_at')
+                expires_at__gt=timezone.now(),
+            ).latest("created_at")
 
             return f"{settings.SITE_URL}auth/verify-email/{verification.verification_code}/"
         except UserVerification.DoesNotExist:
@@ -92,9 +92,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
             verification = UserVerification.create_verification(
                 user=self,
-                verification_type='email',
+                verification_type="email",
                 verification_code=verification_code,
-                expires_at=expires_at
+                expires_at=expires_at,
             )
 
             return f"{settings.SITE_URL}auth/verify-email/{verification_code}/"

@@ -20,21 +20,20 @@ def generate_weekly_user_statistics():
     start_date = end_date - timedelta(days=7)
 
     new_users = User.objects.filter(
-        date_joined__gte=start_date,
-        date_joined__lte=end_date
+        date_joined__gte=start_date, date_joined__lte=end_date
     ).count()
 
     verified_users = User.objects.filter(
-        email_verified=True,
-        date_joined__gte=start_date,
-        date_joined__lte=end_date
+        email_verified=True, date_joined__gte=start_date, date_joined__lte=end_date
     ).count()
 
     stats = {
-        'period': f"{start_date.date()} to {end_date.date()}",
-        'new_users': new_users,
-        'verified_users': verified_users,
-        'verification_rate': f"{(verified_users / new_users * 100):.2f}%" if new_users > 0 else "0%"
+        "period": f"{start_date.date()} to {end_date.date()}",
+        "new_users": new_users,
+        "verified_users": verified_users,
+        "verification_rate": (
+            f"{(verified_users / new_users * 100):.2f}%" if new_users > 0 else "0%"
+        ),
     }
 
     project_root = Path(__file__).resolve().parent.parent
@@ -43,9 +42,11 @@ def generate_weekly_user_statistics():
     try:
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-        with open(log_file, 'a') as f:
+        with open(log_file, "a") as f:
             f.write(f"\n{'=' * 60}\n")
-            f.write(f"Report Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(
+                f"Report Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            )
             f.write(f"Period: {stats['period']}\n")
             f.write(f"New Users: {stats['new_users']}\n")
             f.write(f"Verified Users: {stats['verified_users']}\n")

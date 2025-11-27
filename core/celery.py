@@ -12,8 +12,8 @@ app.conf.update(
     worker_max_tasks_per_child=1000,
     task_acks_late=True,
     task_reject_on_worker_lost=True,
-    beat_scheduler='django_celery_beat.schedulers:DatabaseScheduler',
+    beat_scheduler="django_celery_beat.schedulers:DatabaseScheduler",
 )
 
 # Explicitly discover tasks
-app.autodiscover_tasks(['core', 'authentication', 'notifications'])
+app.autodiscover_tasks(["core", "authentication", "notifications"])

@@ -17,8 +17,7 @@ def cleanup_expired_tokens():
 
     logger.info("Starting token cleanup task")
     expired = UserVerification.objects.filter(
-        expires_at__lt=timezone.now(),
-        is_verified=False
+        expires_at__lt=timezone.now(), is_verified=False
     )
     count = expired.count()
     expired.delete()
@@ -37,21 +36,21 @@ def send_reminder_email_to_unverified_users():
     unverified_users = User.objects.filter(
         is_email_verified=False,
         date_joined__lte=cutoff_date,
-        date_joined__gte=timezone.now() - timedelta(days=30)
+        date_joined__gte=timezone.now() - timedelta(days=30),
     )
 
     sent_count = 0
     for user in unverified_users:
         context = {
-            'user_name': user.get_full_name() or user.username,
-            'verification_link': f"{user.get_verification_link()}",
+            "user_name": user.get_full_name() or user.username,
+            "verification_link": f"{user.get_verification_link()}",
         }
 
         send_email_task.delay(
             subject="Reminder: Verify Your Email",
             recipients=[user.email],
-            template_name='send_reminder_to_verify_email.html',
-            context=context
+            template_name="send_reminder_to_verify_email.html",
+            context=context,
         )
         sent_count += 1
 

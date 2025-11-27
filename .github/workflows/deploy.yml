@@ -1,16 +1,27 @@
 name: CD Pipeline
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Release Pipeline"]
+    types:
+      - completed
 
 jobs:
   build:
     name: Build Docker Images
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Latest Tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          echo "RELEASE_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -22,6 +33,7 @@ jobs:
           username: ${{ secrets.HEROKU_EMAIL }}
           password: ${{ secrets.HEROKU_API_KEY }}
 
+      # 1. Build WEB (Standard)
       - name: Build and Push Web Image
         uses: docker/build-push-action@v6
         with:
@@ -29,19 +41,48 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
-          build-args: RELEASE_VERSION=${{ github.event.release.tag_name }}
+          build-args: RELEASE_VERSION=${{ env.RELEASE_VERSION }}
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # 2. Build WORKER (Custom CMD)
+      - name: Create Worker Dockerfile
+        run: |
+          cp Dockerfile Dockerfile.worker
+          # Remove the last line (CMD) and append the Celery command
+          head -n -1 Dockerfile > Dockerfile.worker
+          echo 'CMD ["celery", "-A", "core", "worker", "--loglevel=info", "--concurrency=2"]' >> Dockerfile.worker
 
       - name: Build and Push Worker Image
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.worker
           platforms: linux/amd64
           push: true
           tags: registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/worker
-          build-args: RELEASE_VERSION=${{ github.event.release.tag_name }}
+          build-args: RELEASE_VERSION=${{ env.RELEASE_VERSION }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3. Build BEAT (Custom CMD)
+      - name: Create Beat Dockerfile
+        run: |
+          cp Dockerfile Dockerfile.beat
+          head -n -1 Dockerfile > Dockerfile.beat
+          echo 'CMD ["celery", "-A", "core", "beat", "--loglevel=info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]' >> Dockerfile.beat
+
+      - name: Build and Push Beat Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.beat
+          platforms: linux/amd64
+          push: true
+          tags: registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/beat
+          build-args: RELEASE_VERSION=${{ env.RELEASE_VERSION }}
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -63,7 +104,21 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          heroku container:release web worker -a ${{ secrets.HEROKU_APP_NAME }}
+          heroku container:release web worker beat -a ${{ secrets.HEROKU_APP_NAME }}
+
+      - name: Run Database Migrations
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Running migrations manually to ensure DB is consistent..."
+          heroku run python manage.py migrate --noinput -a ${{ secrets.HEROKU_APP_NAME }}
+
+      - name: Collect Static Files
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Collecting static files..."
+          heroku run python manage.py collectstatic --noinput -a ${{ secrets.HEROKU_APP_NAME }}
 
       - name: Wait for Deployment
         run: sleep 30
@@ -78,10 +133,16 @@ jobs:
           pytest tests/smoke/ --url=https://${{ secrets.HEROKU_APP_NAME }}-529cb13f68c9.herokuapp.com
         continue-on-error: true
 
+      - name: Get Latest Tag for Notify
+        id: get_tag_notify
+        run: |
+          git fetch --tags
+          echo "RELEASE_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
       - name: Notify Deployment Success
         if: success()
         run: |
-          echo "✅ Deployed ${{ github.event.release.tag_name }} to production"
+          echo "✅ Deployed ${{ env.RELEASE_VERSION }} to production"
 
       - name: Rollback on Failure
         if: failure()
@@ -94,4 +155,4 @@ jobs:
       - name: Notify Deployment Failure
         if: failure()
         run: |
-          echo "❌ Deployment of ${{ github.event.release.tag_name }} failed and was rolled back"
+          echo "❌ Deployment of ${{ env.RELEASE_VERSION }} failed and was rolled back"

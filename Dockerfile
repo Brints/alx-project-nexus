@@ -45,5 +45,4 @@ USER app
 # Expose port (Documentation only)
 EXPOSE 8000
 
-# FIX: Use JSON format wrapped in shell to allow $PORT expansion
 CMD ["sh", "-c", "daphne -b 0.0.0.0 -p $PORT core.asgi:application"]

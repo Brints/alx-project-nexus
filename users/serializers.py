@@ -1,5 +1,8 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
+from organizations.serializers import OrganizationSerializer
 
 User = get_user_model()
 
@@ -35,10 +38,11 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["user_id", "email", "is_premium", "date_joined"]
 
+    @extend_schema_field(OrganizationSerializer(many=True))
     def get_organizations(self, obj):
         memberships = obj.organization_memberships.select_related("organization").all()
         if not memberships:
-            return None
+            return []
         return UserOrganizationSerializer(memberships, many=True).data
 
 

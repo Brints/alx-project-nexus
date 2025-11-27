@@ -52,3 +52,38 @@ def cleanup_expired_verifications():
     count = expired.count()
     expired.delete()
     return f"Deleted {count} expired verification records"
+
+
+@shared_task
+def send_daily_summary_emails():
+    """Send daily summary emails to organization admins"""
+    from organizations.models import Organization
+
+    logger.info("Starting daily summary email task")
+
+    organizations = Organization.objects.prefetch_related("members", "polls").all()
+    sent_count = 0
+
+    for org in organizations:
+        admin_emails = list(
+            org.members.filter(role="admin").values_list("email", flat=True)
+        )
+
+        if admin_emails:
+            # Get org statistics
+            context = {
+                "organization_name": org.org_name,
+                "total_polls": org.polls.count(),
+                "active_polls": org.polls.filter(is_active=True).count(),
+            }
+
+            send_email_task.delay(
+                subject=f"Daily Summary for {org.org_name}",
+                recipients=admin_emails,
+                template_name="send_daily_summary_emails_to_org_admin.html",
+                context=context,
+            )
+            sent_count += 1
+
+    logger.info(f"Daily summary emails queued for {sent_count} organizations")
+    return f"Sent summaries to {sent_count} organizations"

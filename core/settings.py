@@ -4,6 +4,7 @@ from pathlib import Path
 import dj_database_url
 
 import cloudinary
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "anymail",
     "channels",
+    "django_celery_beat",
     # Storage
     "storages",
     "cloudinary",
@@ -357,3 +359,24 @@ LOGGING = {
 # --- GeoIP Configuration ---
 GEOIP_PATH = BASE_DIR / "geoip"
 GEOIP_COUNTRY = "GeoLite2-Country.csv"
+
+CELERY_BEAT_SCHEDULE = {
+    "send-daily-summary-emails": {
+        "task": "notifications.tasks.send_daily_summary_emails",
+        "schedule": crontab(day_of_week="mon-fri", hour=7, minute=0),
+    },
+    "cleanup-expired-tokens": {
+        "task": "authentication.tasks.cleanup_expired_tokens",
+        "schedule": crontab(day_of_week="mon-fri", hour=1, minute=0),
+    },
+    "reminder_email_to_unverified_users": {
+        "task": "authentication.tasks.send_reminder_email_to_unverified_users",
+        "schedule": crontab(day_of_week="mon", hour=0, minute=15),
+    },
+    "generate_new_user_stats": {
+        "task": "core.tasks.generate_weekly_user_statistics",
+        # "schedule": crontab(day_of_week="sun", hour=23, minute=0),
+        # For testing purposes, run every minute
+        "schedule": crontab(minute="*/1"),
+    },
+}

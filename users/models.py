@@ -8,6 +8,8 @@ from django.contrib.auth.models import (
 from django.db import models
 from django.utils import timezone
 
+from core import settings
+
 
 class UserManager(BaseUserManager):
     """
@@ -70,6 +72,32 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     objects = UserManager()
+
+    def get_verification_link(self):
+        """Generate verification link for the user"""
+        try:
+            verification = self.verifications.filter(
+                verification_type='email',
+                is_verified=False,
+                expires_at__gt=timezone.now()
+            ).latest('created_at')
+
+            return f"{settings.SITE_URL}auth/verify-email/{verification.verification_code}/"
+        except UserVerification.DoesNotExist:
+            from datetime import timedelta
+            import secrets
+
+            verification_code = secrets.token_urlsafe(32)
+            expires_at = timezone.now() + timedelta(hours=24)
+
+            verification = UserVerification.create_verification(
+                user=self,
+                verification_type='email',
+                verification_code=verification_code,
+                expires_at=expires_at
+            )
+
+            return f"{settings.SITE_URL}auth/verify-email/{verification_code}/"
 
     def save(self, *args, **kwargs):
         if self.first_name:

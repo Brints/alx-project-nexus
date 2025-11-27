@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Organization, OrganizationMember
@@ -34,10 +35,12 @@ class OrganizationMemberSerializer(serializers.ModelSerializer):
             "joined_at",
         ]
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_owner(self, obj):
         """Indicate if this member is the organization owner."""
         return obj.organization.owner == obj.user
 
+    @extend_schema_field(serializers.EmailField())
     def get_email(self, obj):
         """
         Show email only if:
@@ -83,6 +86,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["org_id", "created_at", "slug", "owner", "join_code"]
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_admin(self, obj):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:

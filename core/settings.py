@@ -375,8 +375,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "generate_new_user_stats": {
         "task": "core.tasks.generate_weekly_user_statistics",
-        # "schedule": crontab(day_of_week="sun", hour=23, minute=0),
-        # For testing purposes, run every minute
-        "schedule": crontab(minute="*/1"),
+        "schedule": crontab(day_of_week="sun", hour=23, minute=0),
     },
 }

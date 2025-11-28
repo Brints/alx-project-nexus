@@ -37,10 +37,11 @@ def generate_weekly_user_statistics():
     }
 
     project_root = Path(__file__).resolve().parent.parent
-    log_file = project_root / "user_statistics_report_log.txt"
+    log_dir = project_root / "logs"
+    log_file = log_dir / "user_statistics_report_log.txt"
 
     try:
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        log_dir.mkdir(exist_ok=True)
 
         with open(log_file, "a") as f:
             f.write(f"\n{'=' * 60}\n")
@@ -54,7 +55,7 @@ def generate_weekly_user_statistics():
             f.write(f"{'=' * 60}\n")
 
         logger.info(f"Statistics written to {log_file}")
-    except Exception as e:
+    except (OSError, IOError) as e:
         logger.error(f"Failed to write statistics to file: {str(e)}")
 
     logger.info(f"Weekly stats: {stats}")

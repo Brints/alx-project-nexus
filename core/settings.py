@@ -18,12 +18,14 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".herokuapp.com"] + os.environ.get(
-    "ALLOWED_HOSTS", ""
-).split(",")
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".herokuapp.com",
+    "6826d4eb58e1.ngrok-free.app",
+] + os.environ.get("ALLOWED_HOSTS", "").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://af64ab7848ce.ngrok-free.app",
     "https://*.ngrok-free.app",
 ]
 
@@ -273,7 +275,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Media Storage (Cloudinary / S3) ---
 # -- Cloudinary Configuration (Current) ---
-cloudinary.config(url=os.environ.get("CLOUDINARY_URL"))
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+)
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 

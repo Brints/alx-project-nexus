@@ -217,3 +217,4 @@ __marimo__/
 
 .idea
 staticfiles/
+user_statistics_report_log.txt

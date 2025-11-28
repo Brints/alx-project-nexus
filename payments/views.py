@@ -5,9 +5,11 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from .models import Transaction
 from .utils import ChapaService
+from notifications.tasks import process_successful_payment_actions
 from .serializers import (
     InitializePaymentSerializer,
     VerifyPaymentSerializer,
@@ -96,19 +98,74 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     @extend_schema(
         summary="Verify Payment",
-        request=VerifyPaymentSerializer,
-        responses={200: {"description": "Payment verified and user upgraded"}},
+        parameters=[
+            OpenApiParameter(
+                name="tx_ref",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Transaction reference from Chapa",
+                required=True,
+            )
+        ],
+        responses={200: {"description": "Payment status page rendered"}},
     )
-    @action(detail=False, methods=["post"])
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[permissions.AllowAny],  # Allow unauthenticated access
+        authentication_classes=[],  # Bypass authentication
+    )
     def verify(self, request):
         """
-        Client-side verification after redirect from Chapa.
+        Handles Chapa redirect callback and displays payment status.
         """
-        serializer = VerifyPaymentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        tx_ref = serializer.validated_data["tx_ref"]
+        tx_ref = request.query_params.get("tx_ref")
 
-        return self._process_payment_verification(tx_ref, request.user)
+        if not tx_ref:
+            from django.shortcuts import render
+
+            context = {
+                "success": False,
+                "message": "Missing transaction reference",
+                "is_premium": False,
+            }
+            return render(request, "email/payment_status.html", context)
+
+        # Fetch transaction to get the user
+        try:
+            txn = Transaction.objects.select_related("user").get(reference=tx_ref)
+            user = txn.user
+        except Transaction.DoesNotExist:
+            from django.shortcuts import render
+
+            context = {
+                "success": False,
+                "message": "Transaction not found",
+                "is_premium": False,
+            }
+            return render(request, "email/payment_status.html", context)
+
+        # Process verification with the user from transaction
+        result = self._process_payment_verification(tx_ref, user)
+
+        # Prepare context for template
+        if isinstance(result, dict):
+            context = {
+                "success": result.get("success", False),
+                "message": result.get("message", "Unknown error"),
+                "is_premium": result.get("is_premium", False),
+                "transaction_ref": tx_ref if result.get("success") else None,
+            }
+        else:
+            context = {
+                "success": False,
+                "message": "Payment verification failed",
+                "is_premium": False,
+            }
+
+        from django.shortcuts import render
+
+        return render(request, "email/payment_status.html", context)
 
     @extend_schema(
         summary="Webhook Handler",
@@ -158,7 +215,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             txn = Transaction.objects.select_related("user").get(reference=tx_ref)
         except Transaction.DoesNotExist:
             logger.error(f"Webhook received for unknown transaction: {tx_ref}")
-            return Response(status=status.HTTP_200_OK)  # Acknowledge to prevent retries
+            return Response(status=status.HTTP_200_OK)  # prevent retries
 
         # Process based on webhook status
         if webhook_status.lower() == "success":
@@ -230,15 +287,20 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 f"(Ref: {tx_ref}, Source: {'Webhook' if from_webhook else 'Client'})"
             )
 
+            # Trigger Invoice Generation and Email Task
+            try:
+                process_successful_payment_actions.delay(txn.id)
+            except Exception as e:
+                logger.error(f"Failed to trigger invoice task for {tx_ref}: {e}")
+
             if from_webhook:
                 return Response(status=status.HTTP_200_OK)
 
-            return Response(
-                {
-                    "message": "Payment verified successfully. You are now a premium user!",
-                    "is_premium": True,
-                }
-            )
+            return {
+                "success": True,
+                "message": "Payment verified successfully",
+                "is_premium": True,
+            }
         else:
             # Payment failed
             with transaction.atomic():
@@ -253,7 +315,4 @@ class PaymentViewSet(viewsets.GenericViewSet):
             if from_webhook:
                 return Response(status=status.HTTP_200_OK)
 
-            return Response(
-                {"error": "Payment verification failed"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return {"success": False, "message": "Payment verification failed"}

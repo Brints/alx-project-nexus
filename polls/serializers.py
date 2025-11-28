@@ -87,7 +87,7 @@ class PollCreateSerializer(serializers.ModelSerializer):
                     {"organization": "Organization not found."}
                 )
 
-        # --- Freemium Limit ---
+        # Poll Creation Limits for Free Users
         is_premium = getattr(user, "is_premium", False)
 
         if not org_id and not is_premium:
@@ -129,7 +129,7 @@ class PollCreateSerializer(serializers.ModelSerializer):
 
 
 class PollListSerializer(serializers.ModelSerializer):
-    """Lighter serializer for listing polls"""
+    """Serializer for listing polls with summary information."""
 
     category = serializers.CharField(source="poll_category.name")
     creator = serializers.CharField(source="creator.first_name")
@@ -157,6 +157,8 @@ class PollListSerializer(serializers.ModelSerializer):
 
 
 class VoteSerializer(serializers.ModelSerializer):
+    """Serializer for casting a vote."""
+
     option_id = serializers.IntegerField(
         write_only=True, help_text="The ID of the option being voted for."
     )
@@ -196,6 +198,7 @@ class VoteSerializer(serializers.ModelSerializer):
                     "You are not a member of the organization hosting this poll."
                 )
 
+        # Country restriction check for polls
         if poll.allowed_country:
             user_country = get_country_from_ip(ip_address)
             if user_country != poll.allowed_country:

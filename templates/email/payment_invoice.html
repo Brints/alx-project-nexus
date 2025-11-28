@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        .meta-info {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        .meta-info table {
+            width: 100%;
+        }
+        .meta-info td {
+            vertical-align: top;
+        }
+        .client-info {
+            text-align: left;
+        }
+        .invoice-details {
+            text-align: right;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .summary-table th, .summary-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .summary-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .status-paid {
+            color: green;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid green;
+            padding: 5px 10px;
+            display: inline-block;
+            transform: rotate(-5deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>INVOICE</h1>
+            <p>{{ company_name }}</p>
+        </div>
+
+        <div class="meta-info">
+            <table>
+                <tr>
+                    <td class="client-info">
+                        <strong>Bill To:</strong><br>
+                        {{ user.first_name }} {{ user.last_name }}<br>
+                        {{ user.email }}<br>
+                        {% if user.phone_number %}{{ user.phone_number }}{% endif %}
+                    </td>
+                    <td class="invoice-details">
+                        <strong>Invoice #:</strong> {{ transaction.reference }}<br>
+                        <strong>Date:</strong> {{ date }}<br>
+                        <strong>Status:</strong> <span class="status-paid">PAID</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Agora Polls Premium Upgrade</td>
+                    <td style="text-align: right;">{{ transaction.currency }} {{ transaction.amount }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total</td>
+                    <td style="text-align: right;">{{ transaction.currency }} {{ transaction.amount }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>{{ company_address }}</p>
+        </div>
+    </div>
+</body>
+</html>

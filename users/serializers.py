@@ -38,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["user_id", "email", "is_premium", "date_joined"]
 
-    @extend_schema_field(OrganizationSerializer(many=True))
+    @extend_schema_field(UserOrganizationSerializer(many=True))
     def get_organizations(self, obj):
         memberships = obj.organization_memberships.select_related("organization").all()
         if not memberships:

@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     python3-dev \
+    pkg-config \
+    libcairo2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -28,6 +30,7 @@ WORKDIR /home/app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     netcat-openbsd \
+    libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/wheels /wheels

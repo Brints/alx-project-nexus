@@ -103,7 +103,7 @@ To get started with The Agora, follow these steps:
     pytest
    
     ## Test Coverage Report
-    pytest --cov=.
+    coverage run manage.py test
    ```
 
 ## API Documentation

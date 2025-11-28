@@ -5,7 +5,9 @@ import secrets
 
 
 class Organization(models.Model):
-    org_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    org_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
     org_name = models.CharField(max_length=100)
     org_email = models.EmailField()
     org_url = models.URLField()
@@ -15,7 +17,7 @@ class Organization(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="owned_organizations",
-        db_index=True
+        db_index=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -32,7 +34,9 @@ class OrganizationMember(models.Model):
         ADMIN = "ADMIN", "Admin"
         MEMBER = "MEMBER", "Member"
 
-    member_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    member_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="members", db_index=True
     )
@@ -59,7 +63,9 @@ class OrganizationInvite(models.Model):
         ACCEPTED = "ACCEPTED", "Accepted"
         EXPIRED = "EXPIRED", "Expired"
 
-    invite_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    invite_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     email = models.EmailField()
     token = models.CharField(max_length=64, unique=True, db_index=True)

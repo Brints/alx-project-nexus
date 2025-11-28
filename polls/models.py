@@ -6,7 +6,9 @@ import uuid
 
 
 class PollCategory(models.Model):
-    category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    category_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
     name = models.CharField(max_length=50, unique=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -22,7 +24,9 @@ class PollCategory(models.Model):
 
 
 class Poll(models.Model):
-    poll_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    poll_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
     poll_question = models.CharField(max_length=255)
     poll_category = models.ForeignKey(PollCategory, on_delete=models.PROTECT)
 

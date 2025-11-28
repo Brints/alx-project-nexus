@@ -19,15 +19,15 @@ logger = logging.getLogger("notifications.tasks")
     max_retries=5,
 )
 def send_email_task(
-        self,
-        *,
-        subject: str,
-        recipients: list[str],
-        template_name: str | None = None,
-        context: dict | None = None,
-        text_body: str | None = None,
-        from_email: str | None = None,
-        attachments: list[tuple[str, bytes, str]] | None = None,
+    self,
+    *,
+    subject: str,
+    recipients: list[str],
+    template_name: str | None = None,
+    context: dict | None = None,
+    text_body: str | None = None,
+    from_email: str | None = None,
+    attachments: list[tuple[str, bytes, str]] | None = None,
 ) -> None:
     logger.info(f"Email task started: {subject} to {recipients}")
     try:
@@ -61,7 +61,7 @@ def process_successful_payment_actions(self, transaction_id):
     logger.info(f"Starting post-payment processing for transaction {transaction_id}")
 
     try:
-        transaction = Transaction.objects.select_related('user').get(id=transaction_id)
+        transaction = Transaction.objects.select_related("user").get(id=transaction_id)
 
         # Prepare Invoice Context
         context = {
@@ -89,14 +89,16 @@ def process_successful_payment_actions(self, transaction_id):
                 logger.info(f"Invoice uploaded to Cloudinary: {invoice_url}")
         else:
             # If upload fails, log it but continue to send email without the URL.
-            logger.warning("Failed to upload invoice to Cloudinary. The invoice URL will be missing.")
+            logger.warning(
+                "Failed to upload invoice to Cloudinary. The invoice URL will be missing."
+            )
 
         # 4. Send Email with Attachment
         email_context = {
             "user_name": transaction.user.first_name,
             "amount": transaction.amount,
             "currency": transaction.currency,
-            "invoice_url": invoice_url
+            "invoice_url": invoice_url,
         }
 
         send_email_task.delay(
@@ -104,10 +106,12 @@ def process_successful_payment_actions(self, transaction_id):
             recipients=[transaction.email],
             template_name="email/payment_status.html",
             context=email_context,
-            attachments=[(filename, pdf_bytes, "application/pdf")]
+            attachments=[(filename, pdf_bytes, "application/pdf")],
         )
 
-        logger.info(f"Invoice generated and email task queued for transaction {transaction.reference}")
+        logger.info(
+            f"Invoice generated and email task queued for transaction {transaction.reference}"
+        )
 
     except Transaction.DoesNotExist:
         logger.error(f"Transaction {transaction_id} not found")
@@ -128,7 +132,9 @@ def send_daily_summary_emails():
 
     for org in organizations:
         admin_emails = list(
-            org.members.filter(role=OrganizationMember.Role.ADMIN).values_list("user__email", flat=True)
+            org.members.filter(role=OrganizationMember.Role.ADMIN).values_list(
+                "user__email", flat=True
+            )
         )
 
         if admin_emails:

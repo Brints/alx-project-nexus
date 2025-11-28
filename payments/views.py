@@ -100,10 +100,10 @@ class PaymentViewSet(viewsets.GenericViewSet):
         summary="Verify Payment",
         parameters=[
             OpenApiParameter(
-                name='tx_ref',
+                name="tx_ref",
                 type=str,
                 location=OpenApiParameter.QUERY,
-                description='Transaction reference from Chapa',
+                description="Transaction reference from Chapa",
                 required=True,
             )
         ],
@@ -113,7 +113,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
         detail=False,
         methods=["get"],
         permission_classes=[permissions.AllowAny],  # Allow unauthenticated access
-        authentication_classes=[]  # Bypass authentication
+        authentication_classes=[],  # Bypass authentication
     )
     def verify(self, request):
         """
@@ -123,10 +123,11 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
         if not tx_ref:
             from django.shortcuts import render
+
             context = {
                 "success": False,
                 "message": "Missing transaction reference",
-                "is_premium": False
+                "is_premium": False,
             }
             return render(request, "email/payment_status.html", context)
 
@@ -136,10 +137,11 @@ class PaymentViewSet(viewsets.GenericViewSet):
             user = txn.user
         except Transaction.DoesNotExist:
             from django.shortcuts import render
+
             context = {
                 "success": False,
                 "message": "Transaction not found",
-                "is_premium": False
+                "is_premium": False,
             }
             return render(request, "email/payment_status.html", context)
 
@@ -152,16 +154,17 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 "success": result.get("success", False),
                 "message": result.get("message", "Unknown error"),
                 "is_premium": result.get("is_premium", False),
-                "transaction_ref": tx_ref if result.get("success") else None
+                "transaction_ref": tx_ref if result.get("success") else None,
             }
         else:
             context = {
                 "success": False,
                 "message": "Payment verification failed",
-                "is_premium": False
+                "is_premium": False,
             }
 
         from django.shortcuts import render
+
         return render(request, "email/payment_status.html", context)
 
     @extend_schema(
@@ -182,9 +185,9 @@ class PaymentViewSet(viewsets.GenericViewSet):
         """
         # Extract signature from headers
         signature = (
-                request.headers.get("x-chapa-signature")
-                or request.headers.get("Chapa-Signature")
-                or request.headers.get("X-Chapa-Signature")
+            request.headers.get("x-chapa-signature")
+            or request.headers.get("Chapa-Signature")
+            or request.headers.get("X-Chapa-Signature")
         )
 
         # Verify signature
@@ -293,7 +296,11 @@ class PaymentViewSet(viewsets.GenericViewSet):
             if from_webhook:
                 return Response(status=status.HTTP_200_OK)
 
-            return {"success": True, "message": "Payment verified successfully", "is_premium": True}
+            return {
+                "success": True,
+                "message": "Payment verified successfully",
+                "is_premium": True,
+            }
         else:
             # Payment failed
             with transaction.atomic():

@@ -27,16 +27,18 @@ class InvoiceService:
             return path
 
         # As a fallback (for development), use Django's static file finders
-        normalized_uri = uri.replace(settings.STATIC_URL, "").lstrip('/')
+        normalized_uri = uri.replace(settings.STATIC_URL, "").lstrip("/")
         found_path = finders.find(normalized_uri)
         if found_path:
             return found_path
 
         logger.warning(f"Static resource not found: {uri}")
-        return uri # Return the original URI if not found
+        return uri  # Return the original URI if not found
 
     @staticmethod
-    def generate_pdf(context: dict, template_name: str = "email/payment_invoice.html") -> bytes | None:
+    def generate_pdf(
+        context: dict, template_name: str = "email/payment_invoice.html"
+    ) -> bytes | None:
         """
         Render HTML template to PDF bytes.
         """
@@ -47,8 +49,8 @@ class InvoiceService:
             pdf = pisa.pisaDocument(
                 BytesIO(html_string.encode("UTF-8")),
                 result,
-                encoding='UTF-8',
-                link_callback=InvoiceService.fetch_resources
+                encoding="UTF-8",
+                link_callback=InvoiceService.fetch_resources,
             )
 
             if not pdf.err:
@@ -71,7 +73,7 @@ class InvoiceService:
                 file_bytes,
                 resource_type="raw",
                 public_id=f"agora/invoices/{filename}",
-                overwrite=True
+                overwrite=True,
             )
             return response.get("secure_url")
         except Exception as e:

@@ -10,13 +10,13 @@ class Transaction(models.Model):
         ("FAILED", "Failed"),
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions"
     )
 
     # Chapa specific fields
-    reference = models.CharField(max_length=100, unique=True)  # We generate this
+    reference = models.CharField(max_length=100, unique=True, db_index=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default="ETB")
     email = models.EmailField()
@@ -24,7 +24,9 @@ class Transaction(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
     gateway_response = models.JSONField(
         null=True, blank=True
-    )  # Store full response for debugging
+    )
+
+    invoice_url = models.URLField(null=True, blank=True, help_text="URL to the generated PDF invoice", db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

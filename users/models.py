@@ -62,7 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(null=True, blank=True)
 
     email_verified = models.BooleanField(default=False)
-    is_premium = models.BooleanField(default=False)
+    is_premium = models.BooleanField(default=False, db_index=True)
     premium_expiry_date = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -121,7 +121,7 @@ class UserVerification(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="verifications"
     )
-    verification_type = models.CharField(max_length=50)  # e.g., 'email', 'phone'
+    verification_type = models.CharField(max_length=50)  # 'email', 'phone'
     verification_code = models.CharField(max_length=255)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

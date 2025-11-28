@@ -6,7 +6,7 @@ import uuid
 
 
 class PollCategory(models.Model):
-    category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     name = models.CharField(max_length=50, unique=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -22,7 +22,7 @@ class PollCategory(models.Model):
 
 
 class Poll(models.Model):
-    poll_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    poll_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     poll_question = models.CharField(max_length=255)
     poll_category = models.ForeignKey(PollCategory, on_delete=models.PROTECT)
 
@@ -69,7 +69,7 @@ class PollOption(models.Model):
     text = models.CharField(max_length=255)
     image = models.ImageField(upload_to="poll_options/", null=True, blank=True)
 
-    # Optimization: Store count here for read speed, update via Signals
+    # Optimization: Store count for read speed, update via Signals
     vote_count = models.BigIntegerField(default=0)
 
     def __str__(self):

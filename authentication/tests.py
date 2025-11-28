@@ -40,5 +40,7 @@ class EmailVerificationUtilTest(TestCase):
 
         # Check that the verification record has been deleted
         self.assertFalse(
-            UserVerification.objects.filter(user=self.user, verification_type="email").exists()
+            UserVerification.objects.filter(
+                user=self.user, verification_type="email"
+            ).exists()
         )

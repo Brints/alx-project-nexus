@@ -79,6 +79,13 @@ class PollViewSet(viewsets.ModelViewSet):
             .select_related("poll_category", "creator", "organization")
         )
 
+    def perform_create(self, serializer):
+        """
+        Inject the current user as the 'creator' of the poll.
+        This passes 'creator=request.user' to the serializer's create() method.
+        """
+        serializer.save(creator=self.request.user)
+
     @extend_schema(
         summary="Manually Close a Poll",
         request=None,
@@ -147,7 +154,15 @@ class PollViewSet(viewsets.ModelViewSet):
         # This calls get_object(), which calls get_queryset() (where the error was)
         poll = self.get_object()
 
-        serializer = VoteSerializer(data=request.data, context={"request": request})
+        if isinstance(request.data, dict):
+            data = request.data.copy()
+        else:
+            data = dict(request.data)
+
+        data["poll_id"] = poll.poll_id
+
+        # Pass context to serializer so it can check duplicates
+        serializer = VoteSerializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
         # Ensure the option belongs to the poll in the URL
@@ -162,59 +177,3 @@ class PollViewSet(viewsets.ModelViewSet):
         return Response(
             {"message": "Vote cast successfully."}, status=status.HTTP_201_CREATED
         )
-
-
-def validate(self, attrs):
-    request = self.context["request"]
-    user = request.user if request.user.is_authenticated else None
-    ip_address = get_client_ip(request)
-
-    option_id = attrs.get("option_id")
-    option = get_object_or_404(PollOption, pk=option_id)
-    poll = option.poll
-
-    if not poll.is_active:
-        raise serializers.ValidationError("This poll is closed.")
-
-    if poll.end_date < timezone.now():
-        raise serializers.ValidationError("This poll has expired.")
-
-    if not poll.is_public:
-        if not user:
-            raise serializers.ValidationError(
-                "You must be logged in to vote in this poll."
-            )
-
-        is_member = OrganizationMember.objects.filter(
-            organization=poll.organization, user=user
-        ).exists()
-
-        if not is_member:
-            org_name = (
-                poll.organization.org_name if poll.organization else "this organization"
-            )
-            raise serializers.ValidationError(
-                f"You must be a member of {org_name} to cast your vote."
-            )
-
-    if poll.allowed_country:
-        user_country = get_country_from_ip(ip_address)
-        if user_country != poll.allowed_country:
-            raise serializers.ValidationError(
-                f"This poll is restricted to voters in {poll.allowed_country}."
-            )
-
-    # Check for duplicate votes
-    if user:
-        if Vote.objects.filter(poll=poll, user=user).exists():
-            raise serializers.ValidationError("You have already voted in this poll.")
-    else:
-        if Vote.objects.filter(poll=poll, ip_address=ip_address).exists():
-            raise serializers.ValidationError(
-                "A vote has already been cast from this IP address."
-            )
-
-    attrs["poll"] = poll
-    attrs["option"] = option
-    attrs["ip_address"] = ip_address
-    return attrs

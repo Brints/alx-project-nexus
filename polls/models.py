@@ -73,11 +73,19 @@ class PollOption(models.Model):
     text = models.CharField(max_length=255)
     image = models.ImageField(upload_to="poll_options/", null=True, blank=True)
 
+    # Relative index (1, 2, 3, 4) for this specific poll
+    index = models.PositiveIntegerField(default=1)
+
     # Optimization: Store count for read speed, update via Signals
     vote_count = models.BigIntegerField(default=0)
 
+    class Meta:
+        ordering = ["index"]
+        # Ensures we can't have same index in the same poll
+        unique_together = ["poll", "index"]
+
     def __str__(self):
-        return f"{self.poll.poll_question} ({self.text})"
+        return f"{self.poll.poll_question} - Option {self.index} ({self.text})"
 
 
 class Vote(models.Model):

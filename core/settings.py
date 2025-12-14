@@ -385,6 +385,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "broadcast-poll-updates": {
         "task": "core.tasks.broadcast_poll_updates",
-        "schedule": 2.0, # every 2 seconds
+        "schedule": 2.0,  # every 2 seconds
     },
 }

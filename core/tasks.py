@@ -102,15 +102,12 @@ def broadcast_poll_updates():
 
             # 3. Fetch Fresh Data (Once per batch, not per vote)
             options_data = list(
-                PollOption.objects.filter(poll_id=poll_id).values(
-                    "id", "vote_count"
-                )
+                PollOption.objects.filter(poll_id=poll_id).values("id", "vote_count")
             )
 
             # 4. Broadcast to WebSocket Group
             async_to_sync(channel_layer.group_send)(
-                room_group_name,
-                {"type": "poll_update", "results": options_data}
+                room_group_name, {"type": "poll_update", "results": options_data}
             )
         except Exception as e:
             logger.error(f"Error broadcasting poll {poll_id}: {e}")

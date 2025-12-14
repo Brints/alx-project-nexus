@@ -5,6 +5,7 @@ from django_redis import get_redis_connection
 
 from .models import Vote, PollOption
 
+
 @receiver(post_save, sender=Vote)
 def handle_new_vote(sender, instance, created, **kwargs):
     """

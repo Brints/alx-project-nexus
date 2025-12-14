@@ -30,7 +30,7 @@ def handle_new_vote(sender, instance, created, **kwargs):
             con.sadd("dirty_polls", str(instance.poll.poll_id))
         except RedisError:
             # The vote is safe in the DB, just the real-time update might delay.
-            logger.error(
+            logger.exception(
                 "Failed to flag dirty poll in Redis",
                 extra={"poll_id": str(instance.poll.poll_id)},
             )

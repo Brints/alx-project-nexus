@@ -110,7 +110,7 @@ def broadcast_poll_updates():
                 room_group_name, {"type": "poll_update", "results": options_data}
             )
         except Exception as e:
-            logger.error(f"Error broadcasting poll {poll_id}: {e}")
+            logger.exception(f"Error broadcasting poll {poll_id}: {e}")
 
     # 5. Cleanup the processing key
     redis_conn.delete("dirty_polls_processing")

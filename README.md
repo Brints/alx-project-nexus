@@ -137,7 +137,7 @@ To get started with The Agora, follow these steps:
 | Payment Integration                      |        |                                             |
 | `/api/v1/payments/initialize/`           | POST   | Initialize Payment                          |
 | `/api/v1/payments/verify/`               | POST   | Verify Payment                              |
-| `/api/v1/payments/{payment_id}/  `       | GET    | Retrieve Payment Details                    |
+| `/api/v1/payments/{payment_id}/`         | GET    | Retrieve Payment Details                    |
 
 ## API Usage Examples
 ### Creating a Poll

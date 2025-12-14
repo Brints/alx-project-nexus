@@ -1,9 +1,14 @@
+import logging
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import F
 from django_redis import get_redis_connection
+from redis.exceptions import RedisError
 
 from .models import Vote, PollOption
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Vote)
@@ -23,6 +28,9 @@ def handle_new_vote(sender, instance, created, **kwargs):
         try:
             con = get_redis_connection("default")
             con.sadd("dirty_polls", str(instance.poll.poll_id))
-        except Exception as e:
+        except RedisError:
             # The vote is safe in the DB, just the real-time update might delay.
-            print(f"Failed to flag dirty poll in Redis: {e}")
+            logger.error(
+                "Failed to flag dirty poll in Redis",
+                extra={"poll_id": str(instance.poll.poll_id)},
+            )

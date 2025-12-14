@@ -33,11 +33,13 @@ It serves as a backend-focused implementation for the ProDev BE case study, meti
 | CI/CD                   | GitHub Actions     |
 | Testing                 | PyTest             |
 | API Documentation       | Swagger / OpenAPI  |
-| Deployment              | AWS / Heroku       |
+| Deployment              | Heroku             |
 | Formatting/Linting      | Ruff / Black       |
 | Code Quality            | SonarCloud         |
 | Asynchronous Tasks      | Celery             |
 | Message Broker          | Redis              |
+| Payment Gateway         | Chapa              |
+| Task Scheduling         | Django Celery Beat |
 
 ## Getting Started
 To get started with The Agora, follow these steps:
@@ -107,35 +109,35 @@ To get started with The Agora, follow these steps:
    ```
 
 ## API Documentation
-| Endpoint                             | Method | Description                                 |
-|--------------------------------------|--------|---------------------------------------------|
-| Poll Management                      |        |                                             |
-| `/api/v1/polls/`                     | GET    | Retrieve a list of all polls                |
-| `/api/v1/polls/`                     | POST   | Create a new poll                           |
-| `/api/v1/polls/{poll_id}/`           | GET    | Retrieve details of a specific poll         |
-| `/api/v1/polls/{poll_id}/`           | PATCH  | Update a specific poll                      |
-| `/api/v1/polls/{poll_id}/`           | DELETE | Delete a specific poll                      |
-| `/api/v1/polls/{poll_id}/close/`     | POST   | Close voting for a specific poll            |
-| Vote on Polls                        |        |                                             |
-| `/api/v1/polls/{poll_id}/vote/`      | POST   | Cast a vote for a specific poll             |
-| User Management                      |        |                                             |
-| `/api/v1/auth/register/`             | POST   | Register a new user                         |
-| `/api/v1/auth/login/`                | POST   | User login                                  |
-| `/api/v1/auth/logout/`               | POST   | User logout                                 |
- | `/api/v1/auth/verify-email/`         | GET    | Verify user email                           |
-| `/api/v1/users/resend-verification/` | POST   | Resend email verification                   |
-| Real-Time Updates                    |        |                                             |
-| `/api/v1/updates/`                   | WS     | WebSocket endpoint for real-time updates    |
-| Organizational Management            |        |                                             |
-| `/api/v1/organizations/`             | GET    | Retrieve a list of organizations            |
-| `/api/v1/organizations/`             | POST   | Create a new organization                   |
-| `/api/v1/organizations/{org_id}/`    | GET    | Retrieve details of a specific organization |
-| `/api/v1/organizations/{org_id}/`    | PATCH  | Update a specific organization              |
-| `/api/v1/organizations/{org_id}/`    | DELETE | Delete a specific organization              |
- | Payment Integration                  |        |                                             |
-| `/api/v1/payments/initialize/`       | POST   | Initialize Payment                          |
-| `/api/v1/payments/verify/`           | POST   | Verify Payment                              |
-| `/api/v1/payments/{payment_id}/  `   | GET    | Retrieve Payment Details                    |
+| Endpoint                                 | Method | Description                                 |
+|------------------------------------------|--------|---------------------------------------------|
+| Poll Management                          |        |                                             |
+| `/api/v1/polls/`                         | GET    | Retrieve a list of all polls                |
+| `/api/v1/polls/`                         | POST   | Create a new poll                           |
+| `/api/v1/polls/{poll_id}/`               | GET    | Retrieve details of a specific poll         |
+| `/api/v1/polls/{poll_id}/`               | PATCH  | Update a specific poll                      |
+| `/api/v1/polls/{poll_id}/`               | DELETE | Delete a specific poll                      |
+| `/api/v1/polls/{poll_id}/close/`         | POST   | Close voting for a specific poll            |
+| Vote on Polls                            |        |                                             |
+| `/api/v1/polls/{poll_id}/vote/`          | POST   | Cast a vote for a specific poll             |
+| User Management                          |        |                                             |
+| `/api/v1/auth/register/`                 | POST   | Register a new user                         |
+| `/api/v1/auth/login/`                    | POST   | User login                                  |
+| `/api/v1/auth/logout/`                   | POST   | User logout                                 |
+| `/api/v1/auth/verify-email/`             | GET    | Verify user email                           |
+| `/api/v1/users/resend-verification/`     | POST   | Resend email verification                   |
+| Real-Time Updates                        |        |                                             |
+| `ws://127.0.0.1:8000/ws/poll/{poll_id}/` | WS     | WebSocket endpoint for real-time updates    |
+| Organizational Management                |        |                                             |
+| `/api/v1/organizations/`                 | GET    | Retrieve a list of organizations            |
+| `/api/v1/organizations/`                 | POST   | Create a new organization                   |
+| `/api/v1/organizations/{org_id}/`        | GET    | Retrieve details of a specific organization |
+| `/api/v1/organizations/{org_id}/`        | PATCH  | Update a specific organization              |
+| `/api/v1/organizations/{org_id}/`        | DELETE | Delete a specific organization              |
+| Payment Integration                      |        |                                             |
+| `/api/v1/payments/initialize/`           | POST   | Initialize Payment                          |
+| `/api/v1/payments/verify/`               | POST   | Verify Payment                              |
+| `/api/v1/payments/{payment_id}/`         | GET    | Retrieve Payment Details                    |
 
 ## API Usage Examples
 ### Creating a Poll

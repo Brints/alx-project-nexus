@@ -1,12 +1,11 @@
-from rest_framework import viewsets, status, permissions, filters, serializers
+from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 
-from .models import Poll, PollCategory, PollOption, Vote
+from .models import Poll, PollCategory
 from .permissions import CanCreateCategory, IsPollCreatorOrOrgAdmin
 from .serializers import (
     PollCreateSerializer,
@@ -15,7 +14,6 @@ from .serializers import (
     VoteSerializer,
 )
 from organizations.models import OrganizationMember
-from .utils import get_client_ip, get_country_from_ip
 
 
 @extend_schema(tags=["Categories"])
@@ -77,6 +75,7 @@ class PollViewSet(viewsets.ModelViewSet):
             )
             .distinct()
             .select_related("poll_category", "creator", "organization")
+            .prefetch_related("options")
         )
 
     def perform_create(self, serializer):

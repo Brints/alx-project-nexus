@@ -383,4 +383,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "core.tasks.generate_weekly_user_statistics",
         "schedule": crontab(day_of_week="sun", hour=23, minute=0),
     },
+    "broadcast-poll-updates": {
+        "task": "core.tasks.broadcast_poll_updates",
+        "schedule": 2.0, # every 2 seconds
+    },
 }

@@ -1,11 +1,16 @@
 import logging
 from pathlib import Path
 
+from asgiref.sync import async_to_sync
 from celery import shared_task
+from channels.layers import get_channel_layer
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
-import os
+
+from django_redis import get_redis_connection
+
+from polls.models import PollOption
 
 User = get_user_model()
 logger = logging.getLogger("core.tasks")
@@ -60,3 +65,55 @@ def generate_weekly_user_statistics():
 
     logger.info(f"Weekly stats: {stats}")
     return stats
+
+
+@shared_task
+def broadcast_poll_updates():
+    """
+    Periodically checks for 'dirty' polls (polls with new votes)
+    and broadcasts the latest results to WebSockets.
+    Prevents 'Thundering Herd' by batching updates.
+    """
+    redis_conn = get_redis_connection("default")
+    channel_layer = get_channel_layer()
+
+    # Check if there are any dirty polls
+    if not redis_conn.exists("dirty_polls"):
+        return
+
+    # 1. Atomic Snapshot
+    # Rename the key so we have a static list to process,
+    # while new votes start filling a fresh 'dirty_polls' set.
+    try:
+        redis_conn.rename("dirty_polls", "dirty_polls_processing")
+    except Exception:
+        # Key might have disappeared or race condition; skip this tick.
+        return
+
+    # 2. Get all unique Poll IDs that need updates
+    dirty_poll_ids = redis_conn.smembers("dirty_polls_processing")
+
+    logger.info(f"Broadcasting updates for {len(dirty_poll_ids)} polls")
+
+    for poll_id_bytes in dirty_poll_ids:
+        try:
+            poll_id = poll_id_bytes.decode("utf-8")
+            room_group_name = f"poll_{poll_id}"
+
+            # 3. Fetch Fresh Data (Once per batch, not per vote)
+            options_data = list(
+                PollOption.objects.filter(poll_id=poll_id).values(
+                    "id", "vote_count"
+                )
+            )
+
+            # 4. Broadcast to WebSocket Group
+            async_to_sync(channel_layer.group_send)(
+                room_group_name,
+                {"type": "poll_update", "results": options_data}
+            )
+        except Exception as e:
+            logger.error(f"Error broadcasting poll {poll_id}: {e}")
+
+    # 5. Cleanup the processing key
+    redis_conn.delete("dirty_polls_processing")

@@ -42,7 +42,6 @@ It is meticulously engineered to handle high-frequency operations, real-time dat
 | Task Scheduling         | Django Celery Beat |
 
 ## Getting Started
-To get started with The Agora, follow these steps:
 1. **Clone the Repository**:
    ```bash
    git clone <repository_url>
